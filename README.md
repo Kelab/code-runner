@@ -1,6 +1,11 @@
 # Judger
 
-[Origin](https://github.com/1510460325/judge-runner)
+Origin: [1510460325/judge-runner](https://github.com/1510460325/judge-runner)
+
+程序还参考了：
+
+- [Certseeds/CS309_dboj_judge_System](https://github.com/Certseeds/CS309_dboj_judge_System/blob/master/mysql/judge.cpp)
+- [MrEdge123/Team-programming](https://github.com/MrEdge123/Team-programming/blob/main/webh/judgeModel/judgeCore.cpp)
 
 获取程序运行时间和内存消耗。
 
