@@ -89,6 +89,8 @@ void monitor(pid_t pid, int timeLimit, int memoryLimit, struct result *rest)
   struct rusage ru;
   if (wait4(pid, &status, 0, &ru) == -1)
   {
+    int errsv = errno;
+    printf("wait4 error %s\n", strerror(errsv));
     exit(EXIT_FAILURE);
   }
 
@@ -131,14 +133,21 @@ void monitor(pid_t pid, int timeLimit, int memoryLimit, struct result *rest)
     }
     else
     {
-      // int errsv = errno;
-      // printf("%s\n", strerror(errsv));
+      int errsv = errno;
+      printf("%s\n", strerror(errsv));
       rest->status = SE;
     }
   }
 }
 
-int run(char *args[], int timeLimit, int memoryLimit, char *in, char *out)
+void write_result(char *result, char *log_file)
+{
+  FILE *_log_file = fopen(log_file, "w+");
+  fprintf(_log_file, result);
+  fclose(_log_file);
+}
+
+int run(char *args[], int timeLimit, int memoryLimit, char *in, char *out, char *log_file)
 {
   // use `_exit` to abort the child program
   // 使用 vfork 时，当子进程运行失败时，要调用 _exit 让出进程控制权
@@ -165,8 +174,10 @@ int run(char *args[], int timeLimit, int memoryLimit, char *in, char *out)
     // vfork 保证子进程先运行，在子进程调用 exec 或 exit 之后父进程才可能被调度运行
     struct result rest;
     monitor(pid, timeLimit, memoryLimit, &rest);
-    printf("{\"status\":%d,\"timeUsed\":%d,\"memoryUsed\":%d}", rest.status, rest.timeUsed, rest.memoryUsed);
-    return 1;
+    char result[1000];
+    sprintf(result, "{\"status\":\"%d\",\"timeUsed\":\"%d\",\"memoryUsed\":\"%d\"}", rest.status, rest.timeUsed, rest.memoryUsed);
+    printf("%s\n", result);
+    write_result(result, log_file);
   }
 }
 
@@ -186,6 +197,6 @@ int main(int argc, char *argv[])
 {
   char *cmd[20];
   split(cmd, argv[1], "@");
-  run(cmd, atoi(argv[2]), atoi(argv[3]), argv[4], argv[5]);
+  run(cmd, atoi(argv[2]), atoi(argv[3]), argv[4], argv[5], argv[6]);
   return 0;
 }

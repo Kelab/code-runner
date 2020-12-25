@@ -8,4 +8,4 @@ test: test.c
 	$(CC) test.c -o test
 
 judge_test: judge test
-	./judge ./test 100 2048 1.in 1.tmp.out
+	./judge test 100 2048 1.in 1.tmp.out 1.result

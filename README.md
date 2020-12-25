@@ -4,7 +4,13 @@
 
 获取程序运行时间和内存消耗。
 
-程序运行结果会输出在终端中。
+程序运行结果会输出到指定的文件中。
+
+结果：
+
+```json
+{ "status": "8", "timeUsed": "0", "memoryUsed": "2020" }
+```
 
 待实现 Feature：
 
@@ -22,4 +28,16 @@ make judge
 
 ```bash
 make judge_test
+```
+
+运行格式：
+
+```bash
+./judge ./process time_limit memory_limit input_file_path process_output_file_path result_file_path
+```
+
+举个例子：
+
+```bash
+./judge ./test 100 2048 1.in 1.tmp.out 1.result
 ```
