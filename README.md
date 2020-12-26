@@ -32,7 +32,7 @@ make judge
 ## 测试
 
 ```bash
-make judge_test
+make test1
 ```
 
 运行格式：

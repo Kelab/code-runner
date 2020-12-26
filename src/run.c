@@ -12,26 +12,13 @@
 #include <sys/wait.h>
 #include <errno.h>
 
-#define AC 0  // Accepted
-#define PE 1  // Presentation Error
-#define TLE 2 // Time Limit Exceeded
-#define MLE 3 // Memory Limit Exceeded
-#define WA 4  // Wrong Answer
-#define RE 5  // Runtime Error
-#define OLE 6
-#define CE 7 // Compile Error
-#define SE 8 // System Error
+#include "constants.h"
+#include "run.h"
+#include "utils.h"
 
-struct result
-{
-  int status;
-  int timeUsed;
-  int memoryUsed;
-};
-
-/*
-set the process limit(cpu and memory)
-*/
+/**
+ * set the process limit(cpu and memory)
+ */
 void setProcessLimit(int timelimit, int memory_limit)
 {
   struct rlimit rl;
@@ -46,12 +33,12 @@ void setProcessLimit(int timelimit, int memory_limit)
   setrlimit(RLIMIT_DATA, &rl);
 }
 
-/*
- run the user process
-*/
+/**
+ * run the specific process
+ */
 void runCmd(char *args[], long timeLimit, long memoryLimit, char *in, char *out)
 {
-
+  // 重定向 标准输出IO 到相应的文件中
   int newstdin = open(in, O_RDWR | O_CREAT, 0644);
   int newstdout = open(out, O_RDWR | O_CREAT, 0644);
   setProcessLimit(timeLimit, memoryLimit);
@@ -79,9 +66,9 @@ void getResult(struct rusage *ru, int data[2])
   data[1] = ru->ru_maxrss;
 }
 
-/*
-monitor the user process
-*/
+/**
+ * monitor the user process
+ */
 void monitor(pid_t pid, int timeLimit, int memoryLimit, struct result *rest)
 {
   // 获取子进程的退出状态
@@ -140,14 +127,14 @@ void monitor(pid_t pid, int timeLimit, int memoryLimit, struct result *rest)
   }
 }
 
-void write_result(char *result, char *log_file)
+void write_file(char *data, char *filename)
 {
-  FILE *_log_file = fopen(log_file, "w+");
-  fprintf(_log_file, result);
-  fclose(_log_file);
+  FILE *_filename = fopen(filename, "w+");
+  fprintf(_filename, data);
+  fclose(_filename);
 }
 
-int run(char *args[], int timeLimit, int memoryLimit, char *in, char *out, char *log_file)
+int run(char *args[], int timeLimit, int memoryLimit, char *in_file, char *out_file, char *result_file)
 {
   // use `_exit` to abort the child program
   // 使用 vfork 时，当子进程运行失败时，要调用 _exit 让出进程控制权
@@ -166,7 +153,7 @@ int run(char *args[], int timeLimit, int memoryLimit, char *in, char *out, char 
   {
     // child process
     // 子进程与父进程共享数据段
-    runCmd(args, timeLimit, memoryLimit, in, out);
+    runCmd(args, timeLimit, memoryLimit, in_file, out_file);
   }
   else
   {
@@ -177,26 +164,7 @@ int run(char *args[], int timeLimit, int memoryLimit, char *in, char *out, char 
     char result[1000];
     sprintf(result, "{\"status\":\"%d\",\"timeUsed\":\"%d\",\"memoryUsed\":\"%d\"}", rest.status, rest.timeUsed, rest.memoryUsed);
     printf("%s\n", result);
-    write_result(result, log_file);
+    write_file(result, result_file);
   }
-}
-
-void split(char **arr, char *str, const char *del)
-{
-  char *s = NULL;
-  s = strtok(str, del);
-  while (s != NULL)
-  {
-    *arr++ = s;
-    s = strtok(NULL, del);
-  }
-  *arr++ = NULL;
-}
-
-int main(int argc, char *argv[])
-{
-  char *cmd[20];
-  split(cmd, argv[1], "@");
-  run(cmd, atoi(argv[2]), atoi(argv[3]), argv[4], argv[5], argv[6]);
   return 0;
 }

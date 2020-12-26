@@ -1,11 +1,37 @@
 CC=gcc
+MKDIRS += out
+OUT_O_DIR=./out
+LDIR=./lib
+IDIR=./src
+CFLAGS=-I$(IDIR) -Wall
+
+LIBS=-lm
+
+_DEPS = constants.h diff.h run.h utils.h
+DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
+
+_OBJ = judge.o utils.o diff.o run.o
+OBJ = $(patsubst %,$(OUT_O_DIR)/%,$(_OBJ))
 
 
-judge: judge.c
-	$(CC) judge.c -o judge
+$(OUT_O_DIR)/%.o: $(IDIR)/%.c $(DEPS) | $(OUT_O_DIR)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-test: test.c
-	$(CC) test.c -o test
+judge: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
-judge_test: judge test
-	./judge test 100 2048 1.in 1.tmp.out 1.result
+.PHONY: clean
+
+clean:
+	rm -f $(OUT_O_DIR)/*.o *~ core $(IDIR)/*~
+
+TESTS=./tests
+1: $(TESTS)/1/1.c
+	$(CC) $< -o test
+
+test1: 1 judge
+	./judge ./test 100 2048 $(TESTS)/$</$<.in $<.tmp.out $<.result
+
+
+$(sort $(MKDIRS)):
+	mkdir -p $@
