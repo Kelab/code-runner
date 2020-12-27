@@ -1,6 +1,8 @@
-#ifndef __UTILS_HEADER
-#define __UTILS_HEADER
+#ifndef UTILS_HEADER
+#define UTILS_HEADER
 
 void split(char **arr, char *str, const char *del);
+void close_fd(int fd);
+int equalStr(const char *s, const char *s2);
 
 #endif

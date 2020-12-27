@@ -2,41 +2,44 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
-#include "diff.h"
 #include "constants.h"
-
-int equalStr(const char *s, const char *s2)
-{
-  while (*s && *s2)
-  {
-    if (*s++ != *s2++)
-    {
-      return 1;
-    }
-  }
-
-  return 0;
-}
+#include "diff.h"
+#include "log.h"
+#include "utils.h"
 
 #define RETURN(rst) \
   {                 \
-    *result = rst;  \
+    *status = rst;  \
     return 0;       \
   }
 
-int checkDiff(int rightout_fd, int userout_fd, int *result)
+int check_diff(int rightout_fd, int userout_fd, int *status)
 {
   char *userout, *rightout;
   const char *cuser, *cright, *end_user, *end_right;
 
   off_t userout_len, rightout_len;
-  userout_len = lseek(userout_fd, 0, SEEK_END);
   rightout_len = lseek(rightout_fd, 0, SEEK_END);
-
-  if (userout_len == -1 || rightout_len == -1)
+  userout_len = lseek(userout_fd, 0, SEEK_END);
+  if (rightout_len == -1)
   {
-    printf("lseek failure\n");
+    log_error("lseek rightout_len failure");
+    _exit(1);
+  }
+
+  if (userout_len == -1)
+  {
+    int errsv = errno;
+    log_error("lseek userout_len failure: %s\n", strerror(errsv));
+    _exit(1);
+  }
+
+  if (rightout_len == -1)
+  {
+    log_error("lseek rightout_len failure\n");
     _exit(1);
   }
 
@@ -57,7 +60,7 @@ int checkDiff(int rightout_fd, int userout_fd, int *result)
   if ((userout = (char *)mmap(NULL, userout_len, PROT_READ | PROT_WRITE,
                               MAP_PRIVATE, userout_fd, 0)) == MAP_FAILED)
   {
-    printf("mmap userout filure\n");
+    log_error("mmap userout filure\n");
     _exit(1);
   }
 
@@ -65,7 +68,7 @@ int checkDiff(int rightout_fd, int userout_fd, int *result)
                                MAP_PRIVATE, rightout_fd, 0)) == MAP_FAILED)
   {
     munmap(userout, userout_len);
-    printf("mmap right filure\n");
+    log_error("mmap right filure\n");
     _exit(1);
   }
 

@@ -1,9 +1,11 @@
 1.tmp.out
 1.result
 judge
-test
+main
 
 .vscode
+
+*.log
 
 # Prerequisites
 *.d

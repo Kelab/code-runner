@@ -1,5 +1,5 @@
-#ifndef __CONSTANTS_HEADER
-#define __CONSTANTS_HEADER
+#ifndef CONSTANTS_HEADER
+#define CONSTANTS_HEADER
 
 #define AC 0 // Accepted
 #define PRESENTATION_ERROR 1

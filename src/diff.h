@@ -1,6 +1,6 @@
-#ifndef __DIFF_HEADER
-#define __DIFF_HEADER
+#ifndef DIFF_HEADER
+#define DIFF_HEADER
 
-int checkDiff(int rightout_fd, int userout_fd, int *result);
+int check_diff(int rightout_fd, int userout_fd, int *result);
 
 #endif

@@ -7,7 +7,7 @@ Origin: [1510460325/judge-runner](https://github.com/1510460325/judge-runner)
 - [dojiong/Lo-runner](https://github.com/dojiong/Lo-runner/)
 - [QingdaoU/Judger](https://github.com/QingdaoU/Judger)
 
-获取程序运行时间和内存消耗。
+根据判题数据，判定用户程序的运行结果以及获取用户程序运行时间和内存消耗。
 
 程序运行结果会输出到指定的文件中。
 
@@ -21,8 +21,7 @@ Origin: [1510460325/judge-runner](https://github.com/1510460325/judge-runner)
   "memory_used": 1544,
   "memory_used_b": 1581056,
   "signal": 0,
-  "exit_code": 0,
-  "err_number": 0
+  "exit_code": 0
 }
 ```
 
@@ -44,13 +43,44 @@ make test1
 
 time_limit 时间单位是 ms  
 memory_limit 内存单位是 kb
+input_path 判题的标准输入文件位置
+output_path 判题的标准输出文件位置
+tmp_output_path 用户程序执行的标准输出位置（用于判断答案是否正确）
+log_path 日志文件位置
 
 ```bash
-./judge ./process time_limit memory_limit input_file_path user_output_file_path result_file_path
+./judge ./process time_limit memory_limit input_path output_path tmp_output_path log_path
 ```
 
 举个例子：
 
 ```bash
-./judge ./test 1000 2048 1.in 1.tmp.out 1.result
+./judge ./test 1000 2048 1.in 1.out 1.tmp.out 1.log
 ```
+
+之所以要多传入一个 `1.tmp.out` 是因为可以：1. 方便对程序执行结果进行判断，2. 不用把判题输出保留在内存中。
+
+`1.log` 是本次判题的日志，方便调试。
+
+## 使用
+
+首先要判断 judge 程序是否运行成功，看进程的退出值。
+
+然后以 JSON 形式读取程序的标准输出，看以下三个值：
+
+```json
+  "signal": 0,
+  "exit_code": 0
+```
+
+`signal` 是导致程序退出的信号值。  
+`exit_code` 是执行判题的程序的退出值。
+
+如果都为 0，则说明本次判题执行成功。  
+如果有不为 0 的值，可以在判题日志中查看更多信息。
+
+## 开源致谢
+
+项目中使用到的开源链接：
+
+- [rxi/log.c](https://github.com/rxi/log.c)
