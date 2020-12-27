@@ -23,14 +23,14 @@ judge: $(OBJ)
 .PHONY: clean
 
 clean:
-	rm -f $(OUT_O_DIR)/*.o *~ core $(IDIR)/*~
+	rm -f $(OUT_O_DIR)/*.o *~ $(IDIR)/*~
 
 TESTS=./tests
 1: $(TESTS)/1/1.c
 	$(CC) $< -o test
 
 test1: 1 judge
-	./judge ./test 100 2048 $(TESTS)/$</$<.in $<.tmp.out $<.result
+	./judge ./test 1000 2048 $(TESTS)/$</$<.in $<.tmp.out $<.result
 
 
 $(sort $(MKDIRS)):

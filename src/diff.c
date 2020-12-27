@@ -41,7 +41,7 @@ int checkDiff(int rightout_fd, int userout_fd, int *result)
   }
 
   if (userout_len >= MAX_OUTPUT)
-    RETURN(OLE);
+    RETURN(OUTPUT_LIMIT_EXCEEDED);
 
   lseek(userout_fd, 0, SEEK_SET);
   lseek(rightout_fd, 0, SEEK_SET);
@@ -49,7 +49,7 @@ int checkDiff(int rightout_fd, int userout_fd, int *result)
   if ((userout_len && rightout_len) == 0)
   {
     if (userout_len || rightout_len)
-      RETURN(WA)
+      RETURN(WRONG_ANSWER)
     else
       RETURN(AC)
   }
@@ -101,10 +101,10 @@ int checkDiff(int rightout_fd, int userout_fd, int *result)
   {
     munmap(userout, userout_len);
     munmap(rightout, rightout_len);
-    RETURN(PE);
+    RETURN(PRESENTATION_ERROR);
   }
 
   munmap(userout, userout_len);
   munmap(rightout, rightout_len);
-  RETURN(WA);
+  RETURN(WRONG_ANSWER);
 }

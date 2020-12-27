@@ -4,8 +4,8 @@ Origin: [1510460325/judge-runner](https://github.com/1510460325/judge-runner)
 
 程序还参考了：
 
-- [Certseeds/CS309_dboj_judge_System](https://github.com/Certseeds/CS309_dboj_judge_System/blob/master/mysql/judge.cpp)
-- [MrEdge123/Team-programming](https://github.com/MrEdge123/Team-programming/blob/main/webh/judgeModel/judgeCore.cpp)
+- [dojiong/Lo-runner](https://github.com/dojiong/Lo-runner/)
+- [QingdaoU/Judger](https://github.com/QingdaoU/Judger)
 
 获取程序运行时间和内存消耗。
 
@@ -19,9 +19,7 @@ Origin: [1510460325/judge-runner](https://github.com/1510460325/judge-runner)
 
 待实现 Feature：
 
-- [ ] 优化获取结果的方式
-- [ ] 优化 log
-- [ ] 能获取到程序运行报错
+- [ ] 优化获取真实执行时间和CPU执行时间
 
 ## 编译
 
@@ -37,12 +35,15 @@ make test1
 
 运行格式：
 
+时间单位是 ms  
+内存单位是 kb
+
 ```bash
-./judge ./process time_limit memory_limit input_file_path process_output_file_path result_file_path
+./judge ./process time_limit_ms memory_limit_b input_file_path process_output_file_path result_file_path
 ```
 
 举个例子：
 
 ```bash
-./judge ./test 100 2048 1.in 1.tmp.out 1.result
+./judge ./test 1000 2048 1.in 1.tmp.out 1.result
 ```
