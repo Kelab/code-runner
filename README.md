@@ -14,12 +14,17 @@ Origin: [1510460325/judge-runner](https://github.com/1510460325/judge-runner)
 结果：
 
 ```json
-{ "status": "8", "timeUsed": "0", "memoryUsed": "2020" }
+{
+  "status": 0,
+  "cpu_time_used": 0,
+  "cpu_time_used_us": 462,
+  "memory_used": 1544,
+  "memory_used_b": 1581056,
+  "signal": 0,
+  "exit_code": 0,
+  "err_number": 0
+}
 ```
-
-待实现 Feature：
-
-- [ ] 优化获取真实执行时间和CPU执行时间
 
 ## 编译
 
@@ -33,13 +38,15 @@ make judge
 make test1
 ```
 
+## 运行
+
 运行格式：
 
-时间单位是 ms  
-内存单位是 kb
+time_limit 时间单位是 ms  
+memory_limit 内存单位是 kb
 
 ```bash
-./judge ./process time_limit_ms memory_limit_b input_file_path process_output_file_path result_file_path
+./judge ./process time_limit memory_limit input_file_path user_output_file_path result_file_path
 ```
 
 举个例子：
