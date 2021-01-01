@@ -10,13 +10,14 @@
 #include "run.h"
 #include "utils.h"
 
-char message[1000];
+char result_message[1000];
 
 void init_result(struct Result *_result)
 {
   _result->status = PENDING;
   _result->cpu_time_used = _result->cpu_time_used_us = 0;
-  _result->memory_used = _result->memory_used_b = 0;
+  _result->real_time_used = _result->real_time_used_us = 0;
+  _result->memory_used = 0;
   _result->signal = _result->exit_code = 0;
 }
 
@@ -26,27 +27,6 @@ void init_config(struct Config *config)
   *config->cmd = '\0';
   config->time_limit = config->memory_limit = 0;
   config->log_file = config->in_file = config->out_file = config->user_out_file = '\0';
-}
-
-void print_result(struct Result *_result)
-{
-  sprintf(message, "{\n"
-                   "  \"status\": %d,\n"
-                   "  \"cpu_time_used\": %d,\n"
-                   "  \"cpu_time_used_us\": %ld,\n"
-                   "  \"memory_used\": %d,\n"
-                   "  \"memory_used_b\": %ld,\n"
-                   "  \"signal\": %d,\n"
-                   "  \"exit_code\": %d\n"
-                   "}",
-          _result->status,
-          _result->cpu_time_used,
-          _result->cpu_time_used_us,
-          _result->memory_used,
-          _result->memory_used_b,
-          _result->signal,
-          _result->exit_code);
-  printf("%s\n", message);
 }
 
 FILE *set_logger(struct Config *config)
@@ -80,6 +60,13 @@ void log_config(struct Config *config)
   log_debug("out_file %s", config->out_file);
   log_debug("user_out_file %s", config->user_out_file);
   log_debug("log_file %s", config->log_file);
+}
+
+void print_result(struct Result *_result)
+{
+  format_result(result_message, _result);
+  printf("%s\n", result_message);
+  log_info(result_message);
 }
 
 int main(int argc, char *argv[])
@@ -117,7 +104,6 @@ int main(int argc, char *argv[])
     diff(&config, &result.status);
     print_result(&result);
   }
-
   fclose(log_fp);
   return 0;
 }

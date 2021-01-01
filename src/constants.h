@@ -20,8 +20,9 @@ struct Result
   int status;
   int cpu_time_used;
   long cpu_time_used_us;
+  int real_time_used;
+  long real_time_used_us;
   int memory_used;
-  long memory_used_b;
   int signal;
   int exit_code;
 };

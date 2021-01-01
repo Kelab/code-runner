@@ -86,7 +86,7 @@ void child_process(struct Config *_config)
 /**
  * monitor the user process
  */
-void monitor(pid_t child_pid, struct Config *_config, struct Result *_result)
+void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, struct timeval *start_time, struct timeval *end_time)
 {
   // 获取子进程的退出状态
   int status;
@@ -96,15 +96,13 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result)
     log_error("wait4");
     exit(EXIT_FAILURE);
   }
-  int u_time = ru.ru_utime.tv_sec * 1000 * 1000 + ru.ru_utime.tv_usec;
-  int s_time = ru.ru_stime.tv_sec * 1000 * 1000 + ru.ru_stime.tv_usec;
-  log_debug("u_time %d us", u_time);
-  log_debug("s_time %d us", s_time);
-  _result->cpu_time_used = ru.ru_utime.tv_sec * 1000 + ru.ru_utime.tv_usec / 1000 + ru.ru_stime.tv_sec * 1000 + ru.ru_stime.tv_usec / 1000;
-  _result->cpu_time_used_us = ru.ru_utime.tv_sec * 1000 * 1000 + ru.ru_utime.tv_usec + ru.ru_stime.tv_sec * 1000 * 1000 + ru.ru_stime.tv_usec;
+  gettimeofday(end_time, NULL);
+  _result->real_time_used = (end_time->tv_sec * 1000 + end_time->tv_usec / 1000 - start_time->tv_sec * 1000 - start_time->tv_usec / 1000);
+  _result->real_time_used_us = (end_time->tv_sec * 1000 * 1000 + end_time->tv_usec - start_time->tv_sec * 1000 * 1000 - start_time->tv_usec);
+  _result->cpu_time_used = ru.ru_utime.tv_sec * 1000 + ru.ru_utime.tv_usec / 1000;
+  _result->cpu_time_used_us = ru.ru_utime.tv_sec * 1000 * 1000 + ru.ru_utime.tv_usec;
   // 在 linux, ru_maxrss 单位是 kb
   _result->memory_used = ru.ru_maxrss;
-  _result->memory_used_b = ru.ru_maxrss * 1024;
 
   // 以下判断运行状态逻辑参考了：QingdaoU/Judger，dojiong/Lo-runner
 
@@ -160,7 +158,10 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result)
 
 int run(struct Config *_config, struct Result *_result)
 {
-  // use `_exit` to abort the child program
+  // record real running time: end_time - start_time
+  struct timeval start_time, end_time;
+
+  gettimeofday(&start_time, NULL);
   pid_t child_pid = fork();
   if (child_pid < 0)
   {
@@ -181,7 +182,7 @@ int run(struct Config *_config, struct Result *_result)
   {
     // parent process
     // vfork 保证子进程先运行，在子进程调用 exec 或 exit 之后父进程才可能被调度运行
-    monitor(child_pid, _config, _result);
+    monitor(child_pid, _config, _result, &start_time, &end_time);
   }
   return 0;
 }

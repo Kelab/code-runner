@@ -10,9 +10,10 @@
 {
   "status": 0,
   "cpu_time_used": 0,
-  "cpu_time_used_us": 462,
-  "memory_used": 1544,
-  "memory_used_b": 1581056,
+  "cpu_time_used_us": 479,
+  "real_time_used": 2,
+  "real_time_used_us": 1966,
+  "memory_used": 1556,
   "signal": 0,
   "exit_code": 0
 }
@@ -152,6 +153,17 @@ status 是判题结果：
 #define SYSTEM_ERROR 8
 ```
 
+仅 `run` 程序之后，状态会为 `-1`。
+
+### 输出单位
+
+其中 `cpu_time_used` 和 `real_time_used` 单位都是毫秒(ms)。
+`cpu_time_used_us` 和 `real_time_used_us` 单位是微秒(us)。
+
+`memory_used` 在 linux 下单位是 kb。
+
+### 其他模式
+
 如果是 `check` 模式的话，只会输出一个判题值，如：
 
 ```bash
@@ -196,8 +208,7 @@ proc_args = [
 
 result = judge(proc_args)
 print("result: ", result)
-# result:  {'status': 0, 'cpu_time_used': 0, 'cpu_time_used_us': 638, 'memory_used': 1528, 'memory_used_b': 1564672, 'signal': 0, 'exit_code': 0}
-
+# result:  {'status': 0, 'cpu_time_used': 0, 'cpu_time_used_us': 579, 'real_time_used': 1, 'real_time_used_us': 631, 'memory_used': 1500, 'signal': 0, 'exit_code': 0}
 proc_args = [
     judge_path,
     "run",
@@ -211,7 +222,7 @@ proc_args = [
 ]
 result = judge(proc_args)
 print("result: ", result)
-# result:  {'status': -1, 'cpu_time_used': 0, 'cpu_time_used_us': 509, 'memory_used': 1568, 'memory_used_b': 1605632, 'signal': 0, 'exit_code': 0}
+# result:  {'status': -1, 'cpu_time_used': 0, 'cpu_time_used_us': 981, 'real_time_used': 9, 'real_time_used_us': 9296, 'memory_used': 1556, 'signal': 0, 'exit_code': 0}
 
 proc_args = [
     judge_path,
@@ -244,6 +255,8 @@ CPU 有时候的时间花费是在运行程序上，而有时候的时间花费�
 您的程序不允许直接接触硬件（例如磁盘）；它必须请求操作系统来执行此操作。
 而且，你的程序也不被允许直接进入内核模式。你必须通过向操作系统询请求它准备提供的特定服务(如从磁盘读取)来输入它。
 这就是操作系统如何调节硬件的使用。
+
+所以判题程序记录的时间仅记录了 `ru_utime`。
 
 ## 开源致谢
 
