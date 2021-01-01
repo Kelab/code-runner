@@ -228,6 +228,23 @@ print("result: ", result)
 
 捕获控制台的输出即可。
 
+## FAQ
+
+### rusage 的 `ru_utime` 和 `ru_stime` 有什么区别？
+
+[来源](https://www.reddit.com/r/cs50/comments/553okd/difference_between_ru_utime_and_ru_stime/)
+
+操作系统的目的就是为了在同时运行许多程序时共享对硬件的访问。
+
+CPU 有时候的时间花费是在运行程序上，而有时候的时间花费则是代表你在执行操作（比如从磁盘或键盘读取数据）。
+
+运行程序的时间被标记为「用户时间」下，而你执行操作的时间被标记为「系统时间」。这就分别是 `utime` 和 `stime`。
+
+所有涉及访问硬件的事情都是在称为内核模式(Kernel Mode)的特殊模式下完成的。
+您的程序不允许直接接触硬件（例如磁盘）；它必须请求操作系统来执行此操作。
+而且，你的程序也不被允许直接进入内核模式。你必须通过向操作系统询请求它准备提供的特定服务(如从磁盘读取)来输入它。
+这就是操作系统如何调节硬件的使用。
+
 ## 开源致谢
 
 项目中使用到的开源库链接：
@@ -239,3 +256,5 @@ print("result: ", result)
 - [1510460325/judge-runner](https://github.com/1510460325/judge-runner)
 - [dojiong/Lo-runner](https://github.com/dojiong/Lo-runner/)
 - [QingdaoU/Judger](https://github.com/QingdaoU/Judger)
+
+对以上项目表示感谢。
