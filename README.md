@@ -162,6 +162,73 @@ status 是判题结果：
 
 说明答案正确，AC。
 
+### 在其他语言中调用
+
+#### Python 例子
+
+```python
+import json
+import subprocess
+
+judge_path = "./judge"
+
+
+def judge(proc_args):
+    proc = subprocess.Popen(proc_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    if err:
+        raise ValueError("Error occurred while calling judge: {}".format(err))
+
+    return json.loads(out.decode("utf-8"))
+
+
+proc_args = [
+    judge_path,
+    "judge",
+    "./main",
+    "1000",
+    "2048",
+    "./tests/1/1.in",
+    "./tests/1/1.out",
+    "1.tmp.out",
+    "-l",
+    "1.log",
+]
+
+result = judge(proc_args)
+print("result: ", result)
+# result:  {'status': 0, 'cpu_time_used': 0, 'cpu_time_used_us': 638, 'memory_used': 1528, 'memory_used_b': 1564672, 'signal': 0, 'exit_code': 0}
+
+proc_args = [
+    judge_path,
+    "run",
+    "./main",
+    "1000",
+    "2048",
+    "./tests/1/1.in",
+    "1.tmp.out",
+    "-l",
+    "1.log",
+]
+result = judge(proc_args)
+print("result: ", result)
+# result:  {'status': -1, 'cpu_time_used': 0, 'cpu_time_used_us': 509, 'memory_used': 1568, 'memory_used_b': 1605632, 'signal': 0, 'exit_code': 0}
+
+proc_args = [
+    judge_path,
+    "check",
+    "./tests/1/1.out",
+    "1.tmp.out",
+    "-l",
+    "1.log",
+]
+result = judge(proc_args)
+print("result: ", result)
+# result:  0
+```
+
+捕获控制台的输出即可。
+
 ## 开源致谢
 
 项目中使用到的开源库链接：
