@@ -29,8 +29,9 @@ struct Result
 
 struct Config
 {
-  int run_only;
-  int check_only;
+  int run_mode;
+  int check_mode;
+  int judge_mode;
   char *cmd[20];
   char *log_file;
   int time_limit;

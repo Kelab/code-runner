@@ -23,7 +23,7 @@ void init_result(struct Result *_result)
 
 void init_config(struct Config *config)
 {
-  config->run_only = config->check_only = 0;
+  config->run_mode = config->check_mode = config->judge_mode = 0;
   *config->cmd = '\0';
   config->time_limit = config->memory_limit = 0;
   config->log_file = config->in_file = config->out_file = config->user_out_file = '\0';
@@ -51,8 +51,9 @@ FILE *set_logger(struct Config *config)
 
 void log_config(struct Config *config)
 {
-  log_debug("run_only %d", config->run_only);
-  log_debug("check_only %d", config->check_only);
+  log_debug("run_mode %d", config->run_mode);
+  log_debug("check_mode %d", config->check_mode);
+  log_debug("judge_mode %d", config->judge_mode);
   log_debug("cmd %s", *config->cmd);
   log_debug("time_limit %d", config->time_limit);
   log_debug("memory_limit %d", config->memory_limit);
@@ -79,9 +80,9 @@ int main(int argc, char *argv[])
   struct Result result;
   init_result(&result);
 
-  if (config.check_only == 1)
+  if (config.check_mode == 1)
   {
-    int status = 0;
+    int status = -1;
     diff(&config, &status);
     printf("%d\n", status);
   }
@@ -92,16 +93,15 @@ int main(int argc, char *argv[])
     if (result.exit_code || result.signal)
     {
       print_result(&result);
+      fclose(log_fp);
       exit(EXIT_FAILURE);
     }
 
-    if (config.run_only == 1)
+    if (config.judge_mode == 1)
     {
-      print_result(&result);
-      exit(EXIT_SUCCESS);
+      diff(&config, &result.status);
     }
 
-    diff(&config, &result.status);
     print_result(&result);
   }
   fclose(log_fp);
