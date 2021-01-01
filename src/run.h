@@ -3,21 +3,11 @@
 
 #include <string.h>
 
+#include "constants.h"
 #include "log.h"
 #include "utils.h"
 
-struct result
-{
-  int status;
-  int cpu_time_used;
-  long cpu_time_used_us;
-  int memory_used;
-  long memory_used_b;
-  int signal;
-  int exit_code;
-};
-
-int run(char *args[], int time_limit, int memory_limit, char *in_file, char *out_file, struct result *_result);
+int run(struct Config *_config, struct Result *_result);
 
 #define CHILD_ERROR_EXIT(message)                                                             \
   {                                                                                           \

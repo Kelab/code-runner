@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "cli.h"
 #include "constants.h"
 #include "diff.h"
 #include "log.h"
@@ -11,15 +12,23 @@
 
 char message[1000];
 
-void init_result(struct result *_result)
+void init_result(struct Result *_result)
 {
-  _result->status = AC;
+  _result->status = PENDING;
   _result->cpu_time_used = _result->cpu_time_used_us = 0;
   _result->memory_used = _result->memory_used_b = 0;
   _result->signal = _result->exit_code = 0;
 }
 
-void print_result(struct result *_result)
+void init_config(struct Config *config)
+{
+  config->run_only = config->check_only = 0;
+  *config->cmd = '\0';
+  config->time_limit = config->memory_limit = 0;
+  config->log_file = config->in_file = config->out_file = config->user_out_file = '\0';
+}
+
+void print_result(struct Result *_result)
 {
   sprintf(message, "{\n"
                    "  \"status\": %d,\n"
@@ -40,37 +49,75 @@ void print_result(struct result *_result)
   printf("%s\n", message);
 }
 
+FILE *set_logger(struct Config *config)
+{
+  FILE *log_fp = NULL;
+  log_set_quiet(true);
+  if (config->log_file != '\0')
+  {
+    log_fp = fopen(config->log_file, "a");
+    if (log_fp == NULL)
+    {
+      fprintf(stderr, "can not open log file\n");
+      fprintf(stderr, "log_file: %s\n", config->log_file);
+    }
+    else
+    {
+      log_add_fp(log_fp, 0);
+    }
+  }
+  return log_fp;
+}
+
+void log_config(struct Config *config)
+{
+  log_debug("run_only %d", config->run_only);
+  log_debug("check_only %d", config->check_only);
+  log_debug("cmd %s", *config->cmd);
+  log_debug("time_limit %d", config->time_limit);
+  log_debug("memory_limit %d", config->memory_limit);
+  log_debug("in_file %s", config->in_file);
+  log_debug("out_file %s", config->out_file);
+  log_debug("user_out_file %s", config->user_out_file);
+  log_debug("log_file %s", config->log_file);
+}
+
 int main(int argc, char *argv[])
 {
-
-  char *cmd[20];
-  split(cmd, argv[1], "@");
-  int time_limit = atoi(argv[2]);
-  int memory_limit = atoi(argv[3]);
-  char *in_file = argv[4];
-  char *out_file = argv[5];
-  char *user_out_file = argv[6];
-  char *log_file = argv[7];
-  FILE *log_fp = fopen(log_file, "a");
-  if (log_fp == NULL)
-  {
-    fprintf(stderr, "can not open log file");
-  }
-  log_set_quiet(true);
-  log_add_fp(log_fp, 0);
-
-  struct result result;
+  struct Config config;
+  init_config(&config);
+  parse_argv(argc, argv, &config);
+  FILE *log_fp = set_logger(&config);
+  log_config(&config);
+  struct Result result;
   init_result(&result);
-  run(cmd, time_limit, memory_limit, in_file, user_out_file, &result);
-  print_result(&result);
-  if (result.exit_code || result.signal)
+
+  if (config.check_only == 1)
   {
-    exit(EXIT_FAILURE);
+    int status = 0;
+    diff(&config, &status);
+    printf("%d\n", status);
+  }
+  else
+  {
+    run(&config, &result);
+    // 运行失败的话，直接输出结果。
+    if (result.exit_code || result.signal)
+    {
+      print_result(&result);
+      exit(EXIT_FAILURE);
+    }
+
+    if (config.run_only == 1)
+    {
+      print_result(&result);
+      exit(EXIT_SUCCESS);
+    }
+
+    diff(&config, &result.status);
+    print_result(&result);
   }
 
-  int right_fd = open(out_file, O_RDWR | O_CREAT, 0644);
-  int userout_fd = open(user_out_file, O_RDWR | O_CREAT, 0644);
-  check_diff(right_fd, userout_fd, &result.status);
-  print_result(&result);
+  fclose(log_fp);
   return 0;
 }

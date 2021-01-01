@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "constants.h"
 #include "diff.h"
@@ -54,7 +55,7 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
     if (userout_len || rightout_len)
       RETURN(WRONG_ANSWER)
     else
-      RETURN(AC)
+      RETURN(ACCEPTED)
   }
 
   if ((userout = (char *)mmap(NULL, userout_len, PROT_READ | PROT_WRITE,
@@ -76,7 +77,7 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
   {
     munmap(userout, userout_len);
     munmap(rightout, rightout_len);
-    RETURN(AC);
+    RETURN(ACCEPTED);
   }
 
   cuser = userout;
@@ -110,4 +111,14 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
   munmap(userout, userout_len);
   munmap(rightout, rightout_len);
   RETURN(WRONG_ANSWER);
+}
+
+int diff(struct Config *config, int *status)
+{
+  int right_fd = open(config->out_file, O_RDONLY, 0644);
+  int userout_fd = open(config->user_out_file, O_RDONLY, 0644);
+  check_diff(right_fd, userout_fd, status);
+  close_fd(right_fd);
+  close_fd(userout_fd);
+  return 0;
 }

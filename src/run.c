@@ -21,26 +21,26 @@
 /**
  * run the specific process
  */
-void child_process(char *args[], long time_limit, long memory_limit, char *in, char *out)
+void child_process(struct Config *_config)
 {
   struct rlimit rl;
   int input_fd = -1;
   int output_fd = -1;
   int err_fd = -1;
 
-  rl.rlim_cur = time_limit / 1000;
+  rl.rlim_cur = _config->time_limit / 1000;
   rl.rlim_max = rl.rlim_cur + 1;
   // CPU time limit in seconds.
   if (setrlimit(RLIMIT_CPU, &rl))
     CHILD_ERROR_EXIT("set RLIMIT_CPU failure");
 
-  rl.rlim_cur = memory_limit * 1024;
+  rl.rlim_cur = _config->memory_limit * 1024;
   rl.rlim_max = rl.rlim_cur + 1024;
   // The maximum size of the process's data segment (initialized data, uninitialized data, and heap)
   if (setrlimit(RLIMIT_DATA, &rl))
     CHILD_ERROR_EXIT("set RLIMIT_DATA failure");
 
-  rl.rlim_cur = memory_limit * 1024 * 2;
+  rl.rlim_cur = _config->memory_limit * 1024 * 2;
   // setrlimit(maxrss) may cause some crash issues
   rl.rlim_max = rl.rlim_cur + 1024;
   // The maximum size of the process's virtual memory (address space) in bytes.
@@ -55,7 +55,7 @@ void child_process(char *args[], long time_limit, long memory_limit, char *in, c
     CHILD_ERROR_EXIT("set RLIMIT_STACK failure");
 
   // 重定向 标准输出IO 到相应的文件中
-  input_fd = open(in, O_RDONLY | O_CREAT, 0700);
+  input_fd = open(_config->in_file, O_RDONLY | O_CREAT, 0700);
   if (input_fd != -1)
   {
     if (dup2(input_fd, fileno(stdin)) == -1)
@@ -63,7 +63,7 @@ void child_process(char *args[], long time_limit, long memory_limit, char *in, c
       CHILD_ERROR_EXIT("input_fd");
     }
   }
-  output_fd = open(out, O_WRONLY | O_CREAT, 0700);
+  output_fd = open(_config->user_out_file, O_WRONLY | O_CREAT, 0700);
   if (output_fd != -1)
   {
     if (dup2(output_fd, fileno(stdout)) == -1)
@@ -79,14 +79,14 @@ void child_process(char *args[], long time_limit, long memory_limit, char *in, c
   //     CHILD_ERROR_EXIT("err_fd");
   //   }
   // }
-  execvp(args[0], args);
+  execvp(_config->cmd[0], _config->cmd);
   CHILD_ERROR_EXIT("execvp");
 }
 
 /**
  * monitor the user process
  */
-void monitor(pid_t child_pid, int time_limit, int memory_limit, struct result *_result)
+void monitor(pid_t child_pid, struct Config *_config, struct Result *_result)
 {
   // 获取子进程的退出状态
   int status;
@@ -96,7 +96,10 @@ void monitor(pid_t child_pid, int time_limit, int memory_limit, struct result *_
     log_error("wait4");
     exit(EXIT_FAILURE);
   }
-
+  int u_time = ru.ru_utime.tv_sec * 1000 * 1000 + ru.ru_utime.tv_usec;
+  int s_time = ru.ru_stime.tv_sec * 1000 * 1000 + ru.ru_stime.tv_usec;
+  log_debug("u_time %d us", u_time);
+  log_debug("s_time %d us", s_time);
   _result->cpu_time_used = ru.ru_utime.tv_sec * 1000 + ru.ru_utime.tv_usec / 1000 + ru.ru_stime.tv_sec * 1000 + ru.ru_stime.tv_usec / 1000;
   _result->cpu_time_used_us = ru.ru_utime.tv_sec * 1000 * 1000 + ru.ru_utime.tv_usec + ru.ru_stime.tv_sec * 1000 * 1000 + ru.ru_stime.tv_usec;
   // 在 linux, ru_maxrss 单位是 kb
@@ -116,7 +119,7 @@ void monitor(pid_t child_pid, int time_limit, int memory_limit, struct result *_
       _result->status = SYSTEM_ERROR;
       break;
     case SIGSEGV:
-      if (_result->memory_used > memory_limit)
+      if (_result->memory_used > _config->memory_limit)
         _result->status = MEMORY_LIMIT_EXCEEDED;
       else
         _result->status = RUNTIME_ERROR;
@@ -127,9 +130,9 @@ void monitor(pid_t child_pid, int time_limit, int memory_limit, struct result *_
       break;
     default:
       // 可能是超过资源限制之后的被 SIGKILL 杀掉
-      if (_result->memory_used > memory_limit)
+      if (_result->memory_used > _config->memory_limit)
         _result->status = MEMORY_LIMIT_EXCEEDED;
-      else if (_result->cpu_time_used > time_limit)
+      else if (_result->cpu_time_used > _config->time_limit)
         _result->status = TIME_LIMIT_EXCEEDED;
       else
         _result->status = RUNTIME_ERROR;
@@ -147,15 +150,15 @@ void monitor(pid_t child_pid, int time_limit, int memory_limit, struct result *_
     }
     else
     {
-      if (_result->cpu_time_used > time_limit)
+      if (_result->cpu_time_used > _config->time_limit)
         _result->status = TIME_LIMIT_EXCEEDED;
-      else if (_result->memory_used > memory_limit)
+      else if (_result->memory_used > _config->memory_limit)
         _result->status = MEMORY_LIMIT_EXCEEDED;
     }
   }
 }
 
-int run(char *args[], int time_limit, int memory_limit, char *in_file, char *out_file, struct result *_result)
+int run(struct Config *_config, struct Result *_result)
 {
   // use `_exit` to abort the child program
   pid_t child_pid = fork();
@@ -172,13 +175,13 @@ int run(char *args[], int time_limit, int memory_limit, char *in_file, char *out
   else if (child_pid == 0)
   {
     // child process
-    child_process(args, time_limit, memory_limit, in_file, out_file);
+    child_process(_config);
   }
   else
   {
     // parent process
     // vfork 保证子进程先运行，在子进程调用 exec 或 exit 之后父进程才可能被调度运行
-    monitor(child_pid, time_limit, memory_limit, _result);
+    monitor(child_pid, _config, _result);
   }
   return 0;
 }

@@ -1,4 +1,4 @@
-# Judger
+# Judge
 
 根据判题数据，判定用户程序的运行结果以及获取用户程序运行时间和内存消耗。
 
@@ -29,36 +29,97 @@ make judge
 ## 测试
 
 ```bash
-make test1
+make test1 # 运行程序并判题
+make test1c # 只检查答案结果，输出判题状态
+make test1r # 只运行程序以及记录程序输出结果
+make cleantest1 # 清除 test1 例子相关的输出
 ```
 
 会运行 `tests/1/` 这个例子并输出。
 
 ## 运行
 
-运行格式：
-
 ```bash
-./judge process_path time_limit memory_limit input_path output_path tmp_output_path log_path
+❯ ./judge
+
+Usage: judge <command> [<args>]
+
+Available commands are:
+
+judge   Run then compare.
+run     Run the specified command only, do not check the result.
+check   Compare the user's output and right answer to get the result.
+
+Type 'judge help <command>' to get help for a specific command.
 ```
 
-- process_path 用户程序地址
+程序有三种命令模式：
+
+- judge
+  完整判题模式
+- run
+  只根据输入运行用户程序
+- check
+  给入题目答案数据和用户输出的数据，输出一个判题结果。
+
+### judge 模式
+
+```bash
+❯ ./judge help judge
+
+Usage: judge judge <command> <time_limit> <memory_limit> <testdata_input_path> <testdata_output_path> <tmp_output_path> [options]
+
+e.g. judge process with input data file and tmp output path, and log path.
+        ./judge judge ./main 1000 2048 ./tests/1/1.in ./tests/1/1.out 1.tmp.out -l 1.log
+
+Options:
+
+  -l    Path of the log file
+```
+
+- command 用户程序地址
 - time_limit 时间单位是 ms
 - memory_limit 内存单位是 kb
 - input_path 判题的标准输入文件位置
 - output_path 判题的标准输出文件位置
 - tmp_output_path 用户程序执行的标准输出位置（用于判断答案是否正确）
-- log_path 日志文件位置
+- -l 参数可以传入一个 log 文件的地址，会把判题 log 写入该文件，方便调试。
 
-举个例子：
+
+之所以要多传入一个 `<tmp_output_path>`(`1.tmp.out`) 是因为可以：
+
+1. 方便多步对程序执行结果进行判断。
+2. 不用把判题输出保留在内存中。
+
+### run 模式
 
 ```bash
-./judge ./test 1000 2048 1.in 1.out 1.tmp.out 1.log
+❯ ./judge help run
+
+Usage: judge run <command> <time_limit> <memory_limit> <testdata_input_path> <tmp_output_path> [options]
+
+e.g. Run process with input data file and tmp output path, and log path.
+        ./judge run ./main 1000 2048 ./tests/1/1.in 1.tmp.out -l 1.log
+
+Options:
+
+  -l    Path of the log file
 ```
 
-之所以要多传入一个 `1.tmp.out` 是因为可以：1. 方便对程序执行结果进行判断，2. 不用把判题输出保留在内存中。
+### check 模式
 
-`1.log` 是本次判题的日志，方便调试。
+```bash
+❯ ./judge help check
+
+Usage: judge check <testdata_output_path> <tmp_output_path> [options]
+
+e.g. Judge answers with <testdata_output_path> and <tmp_output_path>.
+        ./judge check ./tests/1/1.out 1.tmp.out -l 1.log
+
+Options:
+
+  -l    Path of the log file% 
+```
 
 ## 使用
 
@@ -80,16 +141,26 @@ make test1
 status 是判题结果：
 
 ```c
-#define AC 0 // Accepted
+#define PENDING -1 // 还未执行答案检查
+#define ACCEPTED 0
 #define PRESENTATION_ERROR 1
 #define TIME_LIMIT_EXCEEDED 2
 #define MEMORY_LIMIT_EXCEEDED 3
 #define WRONG_ANSWER 4
 #define RUNTIME_ERROR 5
 #define OUTPUT_LIMIT_EXCEEDED 6
-#define CE 7           // Compile Error
-#define SYSTEM_ERROR 8 // System Error
+#define COMPILE_ERROR 7
+#define SYSTEM_ERROR 8
 ```
+
+如果是 `check` 模式的话，只会输出一个判题值，如：
+
+```bash
+❯ ./judge check -l 1.log ./tests/1/1.out 1.tmp.out
+0
+```
+
+说明答案正确，AC。
 
 ## 开源致谢
 
