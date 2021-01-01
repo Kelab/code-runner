@@ -25,22 +25,16 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
   off_t userout_len, rightout_len;
   rightout_len = lseek(rightout_fd, 0, SEEK_END);
   userout_len = lseek(userout_fd, 0, SEEK_END);
-  if (rightout_len == -1)
-  {
-    log_error("lseek rightout_len failure");
-    _exit(1);
-  }
 
   if (userout_len == -1)
   {
-    int errsv = errno;
-    log_error("lseek userout_len failure: %s\n", strerror(errsv));
+    log_error("lseek userout_len failure: %s\n", strerror(errno));
     _exit(1);
   }
 
   if (rightout_len == -1)
   {
-    log_error("lseek rightout_len failure\n");
+    log_error("lseek userout_len failure: %s\n", strerror(errno));
     _exit(1);
   }
 
