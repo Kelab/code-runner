@@ -1,8 +1,8 @@
 CC=gcc
-OUT_O_DIR=./out
+OUT_DIR=./out
 SHARED_OUT_DIR=./shared
 IDIR=./src
-CFLAGS= -Wall -lm -g
+CFLAGS= -Wall -lm
 
 MKDIRS += out
 MKDIRS += shared
@@ -11,10 +11,10 @@ _DEPS = cli.h constants.h diff.h run.h utils.h log.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 _OBJ = judge.o cli.o diff.o run.o utils.o log.o
-OBJ = $(patsubst %,$(OUT_O_DIR)/%,$(_OBJ))
+OBJ = $(patsubst %,$(OUT_DIR)/%,$(_OBJ))
 
-$(OUT_O_DIR)/%.o: $(IDIR)/%.c $(DEPS) | $(OUT_O_DIR)
-	$(CC) $(CFLAGS) -c -o $@ $< $(CFLAGS)
+$(OUT_DIR)/%.o: $(IDIR)/%.c $(DEPS) | $(OUT_DIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 judge: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -22,31 +22,36 @@ judge: $(OBJ)
 S_OBJ = $(patsubst %,$(SHARED_OUT_DIR)/%,$(_OBJ))
 
 $(SHARED_OUT_DIR)/%.o: $(IDIR)/%.c $(DEPS) | $(SHARED_OUT_DIR)
-	$(CC) $(CFLAGS) -c -fPIC -o $@ $< $(CFLAGS)
+	$(CC) $(CFLAGS) -c -fPIC -o $@ $<
 
-.PHONY: libjudge
 libjudge: $(S_OBJ)
-	$(CC) $(CFLAGS) -shared -o libjudge.so $^
+	$(CC) $(CFLAGS) -shared -o $@.so $^
 
 .PHONY: clean
 clean:
-	rm -f $(OUT_O_DIR)/*.o $(SHARED_OUT_DIR)/*.o *~ $(IDIR)/*~
+	rm -f $(OUT_DIR)/*.o $(SHARED_OUT_DIR)/*.o *~ $(IDIR)/*~
 
-TESTS=./tests
-1: $(TESTS)/1/1.c
+
+ifdef TEST
+BASE=./tests/$(TEST)
+
+$(TEST): $(BASE)/$(TEST).c
 	$(CC) $< -o main
 
-test1: 1 judge
-	./judge judge -l 1.log ./main 1000 2048 $(TESTS)/$</$<.in $(TESTS)/$</$<.out 1.tmp.out
+test: $(TEST) judge
+	./judge judge -l $<.log ./main 1000 2048 $(BASE)/$<.in $(BASE)/$<.out $<.tmp.out
 
-test1r: 1 judge
-	./judge run -l 1.log ./main 1000 2048 $(TESTS)/$</$<.in 1.tmp.out
+testr: $(TEST) judge
+	./judge run -l $<.log ./main 1000 2048 $(BASE)/$<.in $<.tmp.out
 
-test1c: 1 judge
-	./judge check -l 1.log $(TESTS)/$</$<.out 1.tmp.out
+testc: $(TEST) judge
+	./judge check -l $<.log $(BASE)/$<.out $<.tmp.out
 
-cleantest1:
-	rm -f 1.log 1.tmp.out main
+cleantest:
+	rm -f $(TEST).log $(TEST).tmp.out main
+
+endif
+
 
 $(sort $(MKDIRS)):
 	mkdir -p $@

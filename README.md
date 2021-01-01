@@ -36,13 +36,15 @@ make libjudge
 ## 测试
 
 ```bash
-make test1 # 运行程序并判题
-make test1c # 只检查答案结果，输出判题状态
-make test1r # 只运行程序以及记录程序输出结果
-make cleantest1 # 清除 test1 例子相关的输出
+make TEST=1 test # 运行程序并判题
+make TEST=1 testc # 只检查答案结果，输出判题状态
+make TEST=1 testr # 只运行程序以及记录程序输出结果
+make TEST=1 cleantest # 清除测试相关的输出
 ```
 
-会运行 `tests/1/` 这个例子并输出。
+`TEST` 是题号，放在 tests 文件夹下。
+
+会运行 `tests/$TEST/` 这个例子并输出结果。
 
 ## 运行
 
@@ -126,7 +128,7 @@ e.g. Judge answers with <testdata_output_path> and <tmp_output_path>.
 
 Options:
 
-  -l    Path of the log file% 
+  -l    Path of the log file%
 ```
 
 各字段意义见 [judge 模式](#judge-模式)。
@@ -142,10 +144,10 @@ Options:
   "exit_code": 0
 ```
 
-`signal` 是导致程序退出的信号值。  
+`signal` 是导致程序退出的信号值。
 `exit_code` 是执行判题的程序的退出值。
 
-如果都为 0，则说明本次判题执行成功。  
+如果都为 0，则说明本次判题执行成功。
 如果有不为 0 的值，可以在判题日志中查看更多信息。
 
 status 是判题结果：
