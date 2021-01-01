@@ -27,6 +27,12 @@ make judge
 
 会在当前目录编译出一个可执行文件 `judge`。
 
+```bash
+make libjudge
+```
+
+会在当前目录编译出一个共享库 `libjudge.so`。
+
 ## 测试
 
 ```bash
@@ -40,7 +46,7 @@ make cleantest1 # 清除 test1 例子相关的输出
 
 ## 运行
 
-```bash
+```plain
 ❯ ./judge
 
 Usage: judge <command> [<args>]
@@ -65,7 +71,7 @@ Type 'judge help <command>' to get help for a specific command.
 
 ### judge 模式
 
-```bash
+```plain
 ❯ ./judge help judge
 
 Usage: judge judge <command> <time_limit> <memory_limit> <testdata_input_path> <testdata_output_path> <tmp_output_path> [options]
@@ -93,7 +99,7 @@ Options:
 
 ### run 模式
 
-```bash
+```plain
 ❯ ./judge help run
 
 Usage: judge run <command> <time_limit> <memory_limit> <testdata_input_path> <tmp_output_path> [options]
@@ -106,9 +112,11 @@ Options:
   -l    Path of the log file
 ```
 
+各字段意义见 [judge 模式](#judge-模式)。
+
 ### check 模式
 
-```bash
+```plain
 ❯ ./judge help check
 
 Usage: judge check <testdata_output_path> <tmp_output_path> [options]
@@ -121,7 +129,9 @@ Options:
   -l    Path of the log file% 
 ```
 
-## 使用
+各字段意义见 [judge 模式](#judge-模式)。
+
+## 运行结果
 
 首先要判断 judge 程序是否运行成功，看进程的退出值。
 
@@ -153,7 +163,7 @@ status 是判题结果：
 #define SYSTEM_ERROR 8
 ```
 
-仅 `run` 程序之后，状态会为 `-1`。
+如果仅执行了 `run` 模式，输出结果应该为: `status: -1`。
 
 ### 输出单位
 
@@ -162,7 +172,7 @@ status 是判题结果：
 
 `memory_used` 在 linux 下单位是 kb。
 
-### 其他模式
+### check 模式输出
 
 如果是 `check` 模式的话，只会输出一个判题值，如：
 
@@ -171,7 +181,7 @@ status 是判题结果：
 0
 ```
 
-说明答案正确，AC。
+说明答案正确。
 
 ### 在其他语言中调用
 
