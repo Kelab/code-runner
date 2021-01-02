@@ -1,11 +1,19 @@
 CC=gcc
+
 OUT_DIR=./out
 SHARED_OUT_DIR=./shared
 IDIR=./src
-CFLAGS= -Wall -lm
 
 MKDIRS += out
 MKDIRS += shared
+
+CFLAGS= -Wall -lm
+
+ifdef DEBUG
+CFLAGS += -g -DDEBUG
+else
+CFLAGS += -O3
+endif
 
 _DEPS = cli.h constants.h diff.h run.h utils.h log.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
@@ -31,7 +39,6 @@ libjudge: $(S_OBJ)
 clean:
 	rm -f $(OUT_DIR)/*.o $(SHARED_OUT_DIR)/*.o *~ $(IDIR)/*~
 
-
 ifdef TEST
 BASE=./tests/$(TEST)
 
@@ -49,7 +56,6 @@ testc: $(TEST) judge
 
 cleantest:
 	rm -f $(TEST).log $(TEST).tmp.out main
-
 endif
 
 
