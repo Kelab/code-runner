@@ -1,0 +1,38 @@
+name: Build
+
+on: push
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: test
+        run: |
+          make TEST=1 test
+          make TEST=1 testc
+          make TEST=1 testr
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: build
+        run: |
+          make judge
+          make libjudge
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact
+          path: |
+            judge
+            libjudge.so
