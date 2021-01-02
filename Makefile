@@ -1,4 +1,3 @@
-CC=gcc
 
 OUT_DIR=./out
 SHARED_OUT_DIR=./shared

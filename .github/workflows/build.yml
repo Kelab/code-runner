@@ -13,10 +13,12 @@ jobs:
 
       - name: test
         run: |
+          $CC --version
           make TEST=1 test
           make TEST=1 testc
           make TEST=1 testr
-
+        env:
+          CC: gcc
   build:
     name: build
     runs-on: ubuntu-latest
@@ -36,3 +38,5 @@ jobs:
           path: |
             judge
             libjudge.so
+        env:
+          CC: gcc
