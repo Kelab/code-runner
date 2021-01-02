@@ -33,7 +33,7 @@ FILE *set_logger(struct Config *config)
 {
   FILE *log_fp = NULL;
   log_set_quiet(true);
-  if (config->log_file != '\0')
+  if (*config->log_file != '\0')
   {
     log_fp = fopen(config->log_file, "a");
     if (log_fp == NULL)
