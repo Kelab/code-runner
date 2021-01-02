@@ -10,10 +10,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
+      - name: Setup Dependencies
+        run: |
+          sudo apt-get update -y -qq
+          sudo apt-get install -y -qq build-essential
       - name: test
         run: |
           $CC --version
+          gcc-9 --version
           make TEST=1 test
           make TEST=1 testc
           make TEST=1 testr
