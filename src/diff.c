@@ -29,13 +29,13 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
   if (userout_len == -1)
   {
     log_error("lseek userout_len failure: %s\n", strerror(errno));
-    _exit(1);
+    RETURN(SYSTEM_ERROR);
   }
 
   if (rightout_len == -1)
   {
     log_error("lseek userout_len failure: %s\n", strerror(errno));
-    _exit(1);
+    RETURN(SYSTEM_ERROR);
   }
 
   if (userout_len >= MAX_OUTPUT)
@@ -44,27 +44,30 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
   lseek(userout_fd, 0, SEEK_SET);
   lseek(rightout_fd, 0, SEEK_SET);
 
+  // 说明两个文件有一个长度为 0
   if ((userout_len && rightout_len) == 0)
   {
+    // 如果有一个不为 0，则答案错误
     if (userout_len || rightout_len)
       RETURN(WRONG_ANSWER)
     else
       RETURN(ACCEPTED)
   }
 
-  if ((userout = (char *)mmap(NULL, userout_len, PROT_READ | PROT_WRITE,
+  if ((userout = (char *)mmap(NULL, userout_len, PROT_READ,
                               MAP_PRIVATE, userout_fd, 0)) == MAP_FAILED)
   {
+    munmap(userout, userout_len);
     log_error("mmap userout filure\n");
-    _exit(1);
+    RETURN(SYSTEM_ERROR);
   }
 
-  if ((rightout = (char *)mmap(NULL, rightout_len, PROT_READ | PROT_WRITE,
+  if ((rightout = (char *)mmap(NULL, rightout_len, PROT_READ,
                                MAP_PRIVATE, rightout_fd, 0)) == MAP_FAILED)
   {
-    munmap(userout, userout_len);
+    munmap(rightout, rightout_len);
     log_error("mmap right filure\n");
-    _exit(1);
+    RETURN(SYSTEM_ERROR);
   }
 
   if ((userout_len == rightout_len) && equalStr(userout, rightout) == 0)
@@ -80,6 +83,7 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
   end_right = rightout + rightout_len;
   while ((cuser < end_user) && (cright < end_right))
   {
+    // 逃逸掉中间输出结果的行末回车换行输出，可以只判断最后一行的
     while ((cuser < end_user) && (*cuser == ' ' || *cuser == '\n' || *cuser == '\r' || *cuser == '\t'))
       cuser++;
     while ((cright < end_right) && (*cright == ' ' || *cright == '\n' || *cright == '\r' || *cright == '\t'))
