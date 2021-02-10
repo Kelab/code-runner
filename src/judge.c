@@ -24,7 +24,10 @@ void init_result(struct Result *_result)
 void init_config(struct Config *config)
 {
   config->run_mode = config->check_mode = config->judge_mode = 0;
-  *config->cmd = '\0';
+  for (int i = 0; i < CMD_MAX_LENGTH; i++)
+  {
+    config->cmd[i] = NULL;
+  }
   config->time_limit = config->memory_limit = 0;
   config->log_file = config->in_file = config->out_file = config->user_out_file = '\0';
 }
@@ -54,7 +57,12 @@ void log_config(struct Config *config)
   log_debug("run_mode %d", config->run_mode);
   log_debug("check_mode %d", config->check_mode);
   log_debug("judge_mode %d", config->judge_mode);
-  log_debug("cmd %s", *config->cmd);
+  int i = 0;
+  while ((config->cmd)[i])
+  {
+    log_debug("cmd part %d: %s", i, (config->cmd)[i]);
+    i++;
+  };
   log_debug("time_limit %d", config->time_limit);
   log_debug("memory_limit %d", config->memory_limit);
   log_debug("in_file %s", config->in_file);

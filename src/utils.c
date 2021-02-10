@@ -18,6 +18,11 @@ void split(char **arr, char *str, const char *del)
   *arr++ = NULL;
 }
 
+void process_cmd(char **arr, char *str)
+{
+  split(arr, str, "@");
+}
+
 void close_fd(int fd)
 {
   if (fd > 0)

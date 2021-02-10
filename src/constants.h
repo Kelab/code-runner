@@ -27,12 +27,14 @@ struct Result
   int exit_code;
 };
 
+#define CMD_MAX_LENGTH 20
+
 struct Config
 {
   int run_mode;
   int check_mode;
   int judge_mode;
-  char *cmd[20];
+  char *cmd[CMD_MAX_LENGTH];
   char *log_file;
   int time_limit;
   int memory_limit;

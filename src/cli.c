@@ -124,10 +124,20 @@ void parse_argv(int argc, char *argv[], struct Config *config)
     }
     exit(EXIT_SUCCESS);
   }
+  else if (strcmp(mode, "judge") == 0)
+  {
+    config->judge_mode = 1;
+    process_cmd(config->cmd, next(argv));
+    config->time_limit = atoi(next(argv));
+    config->memory_limit = atoi(next(argv));
+    config->in_file = next(argv);
+    config->out_file = next(argv);
+    config->user_out_file = next(argv);
+  }
   else if (strcmp(mode, "run") == 0)
   {
     config->run_mode = 1;
-    split(config->cmd, next(argv), "@");
+    process_cmd(config->cmd, next(argv));
     config->time_limit = atoi(next(argv));
     config->memory_limit = atoi(next(argv));
     config->in_file = next(argv);
@@ -136,16 +146,6 @@ void parse_argv(int argc, char *argv[], struct Config *config)
   else if (strcmp(mode, "check") == 0)
   {
     config->check_mode = 1;
-    config->out_file = next(argv);
-    config->user_out_file = next(argv);
-  }
-  else if (strcmp(mode, "judge") == 0)
-  {
-    config->judge_mode = 1;
-    split(config->cmd, next(argv), "@");
-    config->time_limit = atoi(next(argv));
-    config->memory_limit = atoi(next(argv));
-    config->in_file = next(argv);
     config->out_file = next(argv);
     config->user_out_file = next(argv);
   }
