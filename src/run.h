@@ -19,4 +19,9 @@ int run(struct Config *_config, struct Result *_result);
     exit(EXIT_FAILURE);                                                                       \
   }
 
+#define LOG_INTERNAL_ERROR(message)                                                           \
+  {                                                                                           \
+    log_fatal("Error: System errno: %s; Internal error message: " #message, strerror(errno)); \
+  }
+
 #endif

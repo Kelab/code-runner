@@ -63,7 +63,7 @@ void child_process(struct Config *_config)
       CHILD_ERROR_EXIT("input_fd");
     }
   }
-  output_fd = open(_config->user_out_file, O_WRONLY | O_CREAT, 0700);
+  output_fd = open(_config->user_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
   if (output_fd != -1)
   {
     if (dup2(output_fd, fileno(stdout)) == -1)
@@ -93,7 +93,7 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   struct rusage ru;
   if (wait4(child_pid, &status, 0, &ru) == -1)
   {
-    log_error("wait4");
+    LOG_INTERNAL_ERROR("wait4 error");
     exit(EXIT_FAILURE);
   }
   gettimeofday(end_time, NULL);
@@ -104,13 +104,12 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   // 在 linux, ru_maxrss 单位是 kb
   _result->memory_used = ru.ru_maxrss;
 
-  // 以下判断运行状态逻辑参考了：QingdaoU/Judger，dojiong/Lo-runner
-
   // 若此值为非0 表明进程被信号终止，说明子进程非正常结束
   if (WIFSIGNALED(status) != 0)
   {
     // 此时可通过 WTERMSIG(status) 获取使得进程退出的信号编号
     _result->signal = WTERMSIG(status);
+    log_info("strsignal: %s", strsignal(_result->signal));
     switch (_result->signal)
     {
     case SIGUSR1:
@@ -170,18 +169,15 @@ int run(struct Config *_config, struct Result *_result)
     //   or the system - imposed limit on the total number of processes under execution system - wide or by a single user{CHILD_MAX} would be exceeded.
     // The fork() function may fail if:
     //   Insufficient storage space is available.
-    log_error("error in fork");
+    LOG_INTERNAL_ERROR("error in fork");
     exit(EXIT_FAILURE);
   }
   else if (child_pid == 0)
   {
-    // child process
     child_process(_config);
   }
   else
   {
-    // parent process
-    // vfork 保证子进程先运行，在子进程调用 exec 或 exit 之后父进程才可能被调度运行
     monitor(child_pid, _config, _result, &start_time, &end_time);
   }
   return 0;
