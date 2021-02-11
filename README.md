@@ -270,6 +270,22 @@ CPU 有时候的时间花费是在运行程序上，而有时候的时间花费�
 
 所以判题程序记录的时间仅记录了 `ru_utime`。
 
+### 常见 `signal` 和 `exit_code`
+
+`signal`(<https://man7.org/linux/man-pages/man7/signal.7.html>):
+
+| signal | code    | jieshi                                |
+| ------ | ------- | ------------------------------------- |
+| 10     | SIGUSR1 | judge 程序发出的表示程序结束的 signal |
+| 11     | SIGSEGV | 段错误，程序出现空指针                |
+
+`exit_code`:
+
+| exit_code | jieshi                             |
+| --------- | ---------------------------------- |
+| 127       | shell 报出来的 `command not found` |
+
+
 ## 开源致谢
 
 项目中使用到的开源库链接：
