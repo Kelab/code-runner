@@ -23,41 +23,48 @@
  */
 void child_process(struct Config *_config)
 {
-  struct rlimit rl;
   int input_fd = -1;
   int output_fd = -1;
   int err_fd = -1;
 
-  rl.rlim_cur = _config->time_limit / 1000;
-  rl.rlim_max = rl.rlim_cur + 1;
-  // CPU time limit in seconds.
-  if (setrlimit(RLIMIT_CPU, &rl))
-    CHILD_ERROR_EXIT("set RLIMIT_CPU failure");
+  if (_config->time_limit != RESOURCE_UNLIMITED)
+  {
+    // CPU time limit in seconds.
+    log_debug("set time_limit");
+    struct rlimit max_time_rl;
+    max_time_rl.rlim_cur = max_time_rl.rlim_max = (rlim_t)((_config->time_limit + 1000) / 1000);
+    if (setrlimit(RLIMIT_CPU, &max_time_rl))
+      CHILD_ERROR_EXIT("set RLIMIT_CPU failure");
+  }
 
-  rl.rlim_cur = _config->memory_limit * 1024;
-  rl.rlim_max = rl.rlim_cur + 1024;
-  // The maximum size of the process's data segment (initialized data, uninitialized data, and heap)
-  if (setrlimit(RLIMIT_DATA, &rl))
-    CHILD_ERROR_EXIT("set RLIMIT_DATA failure");
+  // 注意，设置 memory_limit 会导致有些程序 crash，比如 python, node
+  if (_config->memory_limit != RESOURCE_UNLIMITED)
+  {
+    // The maximum size of the process's virtual memory (address space) in bytes.
+    log_debug("set memory_limit");
 
-  rl.rlim_cur = _config->memory_limit * 1024 * 2;
-  // setrlimit(maxrss) may cause some crash issues
-  rl.rlim_max = rl.rlim_cur + 1024;
-  // The maximum size of the process's virtual memory (address space) in bytes.
-  if (setrlimit(RLIMIT_AS, &rl))
-    CHILD_ERROR_EXIT("set RLIMIT_AS failure");
+    struct rlimit max_memory_rl;
+    // 为了避免代码是正确的，但是因为超过内存 oom 而被判定为 re。
+    // 如果程序占用低于两倍，最后再重新检查内存占用和配置的关系，就可以判定为超内存而不是 re，如果超过两倍，那就真的 re 了（可能会被 kill）。
+    max_memory_rl.rlim_max = max_memory_rl.rlim_cur = _config->memory_limit * 1024 * 2;
+    if (setrlimit(RLIMIT_AS, &max_memory_rl))
+      CHILD_ERROR_EXIT("set RLIMIT_AS failure");
+  }
 
-  rl.rlim_cur = 64 * 1024 * 1024;
-  rl.rlim_max = rl.rlim_cur + 1024;
-  // The maximum size of the process stack, in bytes.
-  // Upon reaching this limit, a SIGSEGV signal is generated.
-  if (setrlimit(RLIMIT_STACK, &rl))
-    CHILD_ERROR_EXIT("set RLIMIT_STACK failure");
+  log_debug("set max_output_size");
+  // set max output size limit
+  struct rlimit max_output_size;
+  max_output_size.rlim_cur = max_output_size.rlim_max = MAX_OUTPUT;
+  if (setrlimit(RLIMIT_FSIZE, &max_output_size) != 0)
+  {
+    CHILD_ERROR_EXIT("set RLIMIT_FSIZE failure");
+  }
 
   // 重定向 标准输出IO 到相应的文件中
   input_fd = open(_config->in_file, O_RDONLY | O_CREAT, 0700);
   if (input_fd != -1)
   {
+    log_debug("open in_file");
     if (dup2(input_fd, fileno(stdin)) == -1)
     {
       CHILD_ERROR_EXIT("input_fd");
@@ -66,12 +73,13 @@ void child_process(struct Config *_config)
   output_fd = open(_config->user_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
   if (output_fd != -1)
   {
+    log_debug("open user_out_file");
     if (dup2(output_fd, fileno(stdout)) == -1)
     {
       CHILD_ERROR_EXIT("output_fd");
     }
   }
-  // err_fd = open("err.txt", O_WRONLY | O_CREAT, 0700);
+  // err_fd = output_fd;
   // if (err_fd != -1)
   // {
   //   if (dup2(err_fd, fileno(stderr)) == -1)
@@ -79,8 +87,12 @@ void child_process(struct Config *_config)
   //     CHILD_ERROR_EXIT("err_fd");
   //   }
   // }
-  execvp(_config->cmd[0], _config->cmd);
-  CHILD_ERROR_EXIT("execvp");
+
+  log_debug("exec %s", _config->cmd[0]);
+  char *envp[] = {NULL};
+
+  execve(_config->cmd[0], _config->cmd, envp);
+  CHILD_ERROR_EXIT("exec cmd error");
 }
 
 /**
@@ -107,8 +119,10 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   // 若此值为非0 表明进程被信号终止，说明子进程非正常结束
   if (WIFSIGNALED(status) != 0)
   {
+    // TODO: fix SIGUSR1
     // 此时可通过 WTERMSIG(status) 获取使得进程退出的信号编号
     _result->signal = WTERMSIG(status);
+    log_debug("child process exit abnormal");
     log_info("strsignal: %s", strsignal(_result->signal));
     switch (_result->signal)
     {
@@ -138,6 +152,7 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   }
   else
   {
+    log_debug("child process exit normal");
     // 程序正常结束，此时可通过WEXITSTATUS(status)获取进程退出状态(exit时参数)
     _result->exit_code = WEXITSTATUS(status);
 

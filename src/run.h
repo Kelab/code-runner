@@ -9,19 +9,21 @@
 
 int run(struct Config *_config, struct Result *_result);
 
-#define CHILD_ERROR_EXIT(message)                                                             \
-  {                                                                                           \
-    log_fatal("Error: System errno: %s; Internal error message: " #message, strerror(errno)); \
-    close_fd(input_fd);                                                                       \
-    close_fd(output_fd);                                                                      \
-    close_fd(err_fd);                                                                         \
-    raise(SIGUSR1);                                                                           \
-    exit(EXIT_FAILURE);                                                                       \
+#define RESOURCE_UNLIMITED 0
+
+#define CHILD_ERROR_EXIT(message)                                                           \
+  {                                                                                         \
+    log_fatal("child process error message: %s, strerror: %s; ", message, strerror(errno)); \
+    close_fd(input_fd);                                                                     \
+    close_fd(output_fd);                                                                    \
+    close_fd(err_fd);                                                                       \
+    raise(SIGUSR1);                                                                         \
+    exit(EXIT_FAILURE);                                                                     \
   }
 
-#define LOG_INTERNAL_ERROR(message)                                                           \
-  {                                                                                           \
-    log_fatal("Error: System errno: %s; Internal error message: " #message, strerror(errno)); \
+#define LOG_INTERNAL_ERROR(message)                                                    \
+  {                                                                                    \
+    log_fatal("message: %s, Interlnal Error: strerror: %s", message, strerror(errno)); \
   }
 
 #endif
