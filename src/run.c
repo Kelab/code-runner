@@ -95,6 +95,21 @@ void child_process(struct Config *_config)
   CHILD_ERROR_EXIT("exec cmd error");
 }
 
+void log_rusage(struct rusage *ru)
+{
+  log_debug("user time used us %ld", ru->ru_utime.tv_usec);
+  log_debug("user time used s %ld", ru->ru_utime.tv_sec);
+  log_debug("system time used us %ld", ru->ru_stime.tv_usec);
+  log_debug("system time used s %ld", ru->ru_stime.tv_sec);
+  log_debug("maximum resident set size %ld", ru->ru_maxrss);
+  log_debug("page reclaims %ld", ru->ru_minflt);
+  log_debug("page faults %ld", ru->ru_majflt);
+  log_debug("block input operations %ld", ru->ru_inblock);
+  log_debug("block output operations %ld", ru->ru_oublock);
+  log_debug("voluntary context switches %ld", ru->ru_nvcsw);
+  log_debug("involuntary context switches %ld", ru->ru_nivcsw);
+}
+
 /**
  * monitor the user process
  */
@@ -109,7 +124,8 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
     exit(EXIT_FAILURE);
   }
   gettimeofday(end_time, NULL);
-  _result->real_time_used = (end_time->tv_sec * 1000 + end_time->tv_usec / 1000 - start_time->tv_sec * 1000 - start_time->tv_usec / 1000);
+  log_rusage(&ru);
+  _result->real_time_used = ((end_time->tv_sec - start_time->tv_sec) * 1000 + (end_time->tv_usec - start_time->tv_usec) / 1000);
   _result->real_time_used_us = (end_time->tv_sec * 1000 * 1000 + end_time->tv_usec - start_time->tv_sec * 1000 * 1000 - start_time->tv_usec);
   _result->cpu_time_used = ru.ru_utime.tv_sec * 1000 + ru.ru_utime.tv_usec / 1000;
   _result->cpu_time_used_us = ru.ru_utime.tv_sec * 1000 * 1000 + ru.ru_utime.tv_usec;
