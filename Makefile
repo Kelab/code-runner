@@ -45,7 +45,7 @@ $(TEST): $(BASE)/$(TEST).c
 	$(CC) $< -o main
 
 test: $(TEST) judge
-	./judge judge ./main 1000 2048 $(BASE)/$<.in $(BASE)/$<.out $<.tmp.out
+	./judge judge -l $<.log ./main 1000 2048 $(BASE)/$<.in $(BASE)/$<.out $<.tmp.out
 
 testr: $(TEST) judge
 	./judge run -l $<.log ./main 1000 2048 $(BASE)/$<.in $<.tmp.out
