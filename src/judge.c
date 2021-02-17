@@ -36,7 +36,7 @@ FILE *set_logger(struct Config *config)
 {
   FILE *log_fp = NULL;
   log_set_quiet(true);
-  if (*config->log_file != '\0')
+  if (config->log_file)
   {
     log_fp = fopen(config->log_file, "a");
     if (log_fp == NULL)
@@ -54,21 +54,21 @@ FILE *set_logger(struct Config *config)
 
 void log_config(struct Config *config)
 {
-  log_debug("run_mode %d", config->run_mode);
-  log_debug("check_mode %d", config->check_mode);
-  log_debug("judge_mode %d", config->judge_mode);
+  log_debug("config: run_mode %d", config->run_mode);
+  log_debug("config: check_mode %d", config->check_mode);
+  log_debug("config: judge_mode %d", config->judge_mode);
   int i = 0;
   while ((config->cmd)[i])
   {
-    log_debug("cmd part %d: %s", i, (config->cmd)[i]);
+    log_debug("config: cmd part %d: %s", i, (config->cmd)[i]);
     i++;
   };
-  log_debug("time_limit %d", config->time_limit);
-  log_debug("memory_limit %d", config->memory_limit);
-  log_debug("in_file %s", config->in_file);
-  log_debug("out_file %s", config->out_file);
-  log_debug("user_out_file %s", config->user_out_file);
-  log_debug("log_file %s", config->log_file);
+  log_debug("config: time_limit %d", config->time_limit);
+  log_debug("config: memory_limit %d", config->memory_limit);
+  log_debug("config: in_file %s", config->in_file);
+  log_debug("config: out_file %s", config->out_file);
+  log_debug("config: user_out_file %s", config->user_out_file);
+  log_debug("config: log_file %s", config->log_file);
 }
 
 void print_result(struct Result *_result)
@@ -78,14 +78,23 @@ void print_result(struct Result *_result)
   log_info(result_message);
 }
 
+#define CLOSE_LOGGER_FILE() \
+  {                         \
+    if (log_fp != NULL)     \
+    {                       \
+      fclose(log_fp);       \
+    }                       \
+  }
+
 int main(int argc, char *argv[])
 {
   struct Config config;
+  struct Result result;
+
   init_config(&config);
   parse_argv(argc, argv, &config);
   FILE *log_fp = set_logger(&config);
   log_config(&config);
-  struct Result result;
   init_result(&result);
 
   if (config.check_mode == 1)
@@ -101,7 +110,7 @@ int main(int argc, char *argv[])
     if (result.exit_code || result.signal)
     {
       print_result(&result);
-      fclose(log_fp);
+      CLOSE_LOGGER_FILE();
       exit(EXIT_FAILURE);
     }
 
@@ -109,9 +118,8 @@ int main(int argc, char *argv[])
     {
       diff(&config, &result.status);
     }
-
     print_result(&result);
   }
-  fclose(log_fp);
+  CLOSE_LOGGER_FILE();
   return 0;
 }
