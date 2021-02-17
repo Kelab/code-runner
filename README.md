@@ -33,19 +33,6 @@ make libjudge
 
 会在当前目录编译出一个共享库 `libjudge.so`。
 
-## 测试
-
-```bash
-make TEST=1 test # 运行程序并判题
-make TEST=1 testc # 只检查答案结果，输出判题状态
-make TEST=1 testr # 只运行程序以及记录程序输出结果
-make TEST=1 cleantest # 清除测试相关的输出
-```
-
-`TEST` 是题号，放在 tests 文件夹下。
-
-会运行 `tests/$TEST/` 这个例子并输出结果。
-
 ## 运行
 
 ```plain
@@ -185,15 +172,63 @@ status 是判题结果：
 
 说明答案正确，判题状态是 ACCEPT。
 
+## 测试
+
+```bash
+make TEST=1 test # 运行程序并判题
+make TEST=1 testc # 只检查答案结果，输出判题状态
+make TEST=1 testr # 只运行程序以及记录程序输出结果
+make TEST=1 cleantest # 清除测试相关的输出
+```
+
+`TEST` 是题号，放在 tests 文件夹下。
+
+会运行 `tests/$TEST/` 这个例子并输出结果。
+
+## FAQ
+
+### rusage 的 `ru_utime` 和 `ru_stime` 有什么区别？
+
+[来源](https://www.reddit.com/r/cs50/comments/553okd/difference_between_ru_utime_and_ru_stime/)
+
+操作系统出现的原因就是为了在同时运行多个程序时可以共享对硬件的访问。
+
+CPU 时间有时候花费是在运行用户的程序上，而有时候花费在进行系统调用(syscall)上（比如从磁盘或键盘读取数据）。
+
+运行用户程序的时间被标记为「用户时间」，进行系统调用的时间被标记为「系统时间」。二者分别是 `rusage` 的 `ru_utime` 和 `ru_stime` 。
+
+所有涉及访问硬件的行为都是在名为内核模式(Kernel Mode)的特殊模式下完成的。
+
+你的程序不允许直接接触硬件（例如磁盘）；你必须通过请求操作系统来完成接触硬件的操作。
+
+而且，你的程序也不被允许直接进入内核模式。如果你想从磁盘读取文件，那你必须通过请求操作系统提供的特定服务来完成这个行为。
+
+这就是操作系统如何调节硬件的使用。
+
+所以判题程序记录的时间仅记录了 `ru_utime`。
+
+### 常见 `signal` 和 `exit_code`
+
+`signal`(<https://man7.org/linux/man-pages/man7/signal.7.html>):
+
+| signal | code    | 解释                                  |
+| ------ | ------- | ------------------------------------- |
+| 10     | SIGUSR1 | judge 程序发出的表示程序结束的 signal |
+| 11     | SIGSEGV | 段错误，程序出现空指针                |
+
+`exit_code`:
+
+| exit_code | 解释                               |
+| --------- | ---------------------------------- |
+| 127       | shell 报出来的 `command not found` |
+
 ### 在其他语言中调用
 
-#### Python 例子
+可以以启动子进程的方式来调用 `judge`，比如：
 
 ```python
 import json
 import subprocess
-
-judge_path = "./judge"
 
 
 def judge(proc_args):
@@ -206,7 +241,7 @@ def judge(proc_args):
 
 
 proc_args = [
-    judge_path,
+    "./judge",
     "judge",
     "./main",
     "1000",
@@ -221,70 +256,9 @@ proc_args = [
 result = judge(proc_args)
 print("result: ", result)
 # result:  {'status': 0, 'cpu_time_used': 0, 'cpu_time_used_us': 579, 'real_time_used': 1, 'real_time_used_us': 631, 'memory_used': 1500, 'signal': 0, 'exit_code': 0}
-proc_args = [
-    judge_path,
-    "run",
-    "./main",
-    "1000",
-    "2048",
-    "./tests/1/1.in",
-    "1.tmp.out",
-    "-l",
-    "1.log",
-]
-result = judge(proc_args)
-print("result: ", result)
-# result:  {'status': -1, 'cpu_time_used': 0, 'cpu_time_used_us': 981, 'real_time_used': 9, 'real_time_used_us': 9296, 'memory_used': 1556, 'signal': 0, 'exit_code': 0}
-
-proc_args = [
-    judge_path,
-    "check",
-    "./tests/1/1.out",
-    "1.tmp.out",
-    "-l",
-    "1.log",
-]
-result = judge(proc_args)
-print("result: ", result)
-# result:  0
 ```
 
 运行命令，然后捕获控制台的输出即可。
-
-## FAQ
-
-### rusage 的 `ru_utime` 和 `ru_stime` 有什么区别？
-
-[来源](https://www.reddit.com/r/cs50/comments/553okd/difference_between_ru_utime_and_ru_stime/)
-
-操作系统的目的就是为了在同时运行许多程序时共享对硬件的访问。
-
-CPU 有时候的时间花费是在运行程序上，而有时候的时间花费则是代表你在进行系统调用(syscall)（比如从磁盘或键盘读取数据）。
-
-运行程序的时间被标记为「用户时间」下，而你进行系统调用的时间被标记为「系统时间」。这就分别是 `utime` 和 `stime`。
-
-所有涉及访问硬件的事情都是在称为内核模式(Kernel Mode)的特殊模式下完成的。
-您的程序不允许直接接触硬件（例如磁盘）；它必须请求操作系统来执行此操作。
-而且，你的程序也不被允许直接进入内核模式。你必须通过向操作系统询请求它准备提供的特定服务(如从磁盘读取)来输入它。
-这就是操作系统如何调节硬件的使用。
-
-所以判题程序记录的时间仅记录了 `ru_utime`。
-
-### 常见 `signal` 和 `exit_code`
-
-`signal`(<https://man7.org/linux/man-pages/man7/signal.7.html>):
-
-| signal | code    | jieshi                                |
-| ------ | ------- | ------------------------------------- |
-| 10     | SIGUSR1 | judge 程序发出的表示程序结束的 signal |
-| 11     | SIGSEGV | 段错误，程序出现空指针                |
-
-`exit_code`:
-
-| exit_code | jieshi                             |
-| --------- | ---------------------------------- |
-| 127       | shell 报出来的 `command not found` |
-
 
 ## 开源致谢
 
