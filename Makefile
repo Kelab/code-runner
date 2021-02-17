@@ -38,24 +38,28 @@ libjudge: $(S_OBJ)
 clean:
 	rm -f $(OUT_DIR)/*.o $(SHARED_OUT_DIR)/*.o *~ $(IDIR)/*~
 
-ifdef TEST
-BASE=./tests/$(TEST)
+C_BASE=./tests/c
 
-$(TEST): $(BASE)/$(TEST).c
+c: $(C_BASE)/main.c
 	$(CC) $< -o main
 
-test: $(TEST) judge
-	./judge judge -l $<.log ./main 1000 2048 $(BASE)/$<.in $(BASE)/$<.out $<.tmp.out
+testc: c judge
+	./judge judge -l c.log ./main 1000 2048 $(C_BASE)/1.in $(C_BASE)/1.out c.tmp.out
 
-testr: $(TEST) judge
-	./judge run -l $<.log ./main 1000 2048 $(BASE)/$<.in $<.tmp.out
+testcr: c judge
+	./judge run -l c.log ./main 1000 2048 $(C_BASE)1.in c.tmp.out
 
-testc: $(TEST) judge
-	./judge check -l $<.log $(BASE)/$<.out $<.tmp.out
+testcc: c judge
+	./judge check -l c.log $(C_BASE)/1.out c.tmp.out
+
+NODE_BASE=./tests/node
+
+testnode: judge
+	./judge judge -l node.log "node $(NODE_BASE)/main.js" 1000 0 $(NODE_BASE)/1.in $(NODE_BASE)/1.out node.tmp.out
+
 
 cleantest:
-	rm -f $(TEST).log $(TEST).tmp.out main
-endif
+	rm -f c.log c.tmp.out main node.log node.tmp.out
 
 
 $(sort $(MKDIRS)):

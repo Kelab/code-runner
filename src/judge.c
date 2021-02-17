@@ -63,8 +63,8 @@ void log_config(struct Config *config)
     log_debug("config: cmd part %d: %s", i, (config->cmd)[i]);
     i++;
   };
-  log_debug("config: time_limit %d", config->time_limit);
-  log_debug("config: memory_limit %d", config->memory_limit);
+  log_debug("config: time_limit %d ms", config->time_limit);
+  log_debug("config: memory_limit %d kb", config->memory_limit);
   log_debug("config: in_file %s", config->in_file);
   log_debug("config: out_file %s", config->out_file);
   log_debug("config: user_out_file %s", config->user_out_file);
