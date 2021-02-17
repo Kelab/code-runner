@@ -20,7 +20,7 @@ void split(char **arr, char *str, const char *del)
 
 void process_cmd(char **arr, char *str)
 {
-  split(arr, str, "@");
+  split(arr, str, " ");
 }
 
 void close_fd(int fd)
