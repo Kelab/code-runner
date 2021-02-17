@@ -24,6 +24,7 @@ int run(struct Config *_config, struct Result *_result);
 #define LOG_INTERNAL_ERROR(message)                                                    \
   {                                                                                    \
     log_fatal("message: %s, Interlnal Error: strerror: %s", message, strerror(errno)); \
+    exit(EXIT_FAILURE);                                                                \
   }
 
 #endif

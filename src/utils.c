@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <limits.h>
 
 #include "constants.h"
 #include "utils.h"
@@ -64,4 +66,14 @@ void format_result(char *message, struct Result *_result)
           _result->memory_used,
           _result->signal,
           _result->exit_code);
+}
+
+long tv_to_ms(const struct timeval *tv)
+{
+  return (tv->tv_sec * 1000) + ((tv->tv_usec + 500) / 1000);
+}
+
+long tv_to_us(const struct timeval *tv)
+{
+  return (tv->tv_sec * 1000 * 1000) + tv->tv_usec;
 }

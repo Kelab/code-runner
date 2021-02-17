@@ -97,11 +97,11 @@ void child_process(struct Config *_config)
 
 void log_rusage(struct rusage *ru)
 {
-  log_debug("rusage: user time used us %ld", ru->ru_utime.tv_usec);
-  log_debug("rusage: user time used s %ld", ru->ru_utime.tv_sec);
-  log_debug("rusage: system time used us %ld", ru->ru_stime.tv_usec);
-  log_debug("rusage: system time used s %ld", ru->ru_stime.tv_sec);
-  log_debug("rusage: maximum resident set size %ld", ru->ru_maxrss);
+  log_debug("rusage: user time used tv_sec %ld s", ru->ru_utime.tv_sec);
+  log_debug("rusage: user time used tv_usec %ld us", ru->ru_utime.tv_usec);
+  log_debug("rusage: system time tv_sec %ld s", ru->ru_stime.tv_sec);
+  log_debug("rusage: system time tv_usec %ld us", ru->ru_stime.tv_usec);
+  log_debug("rusage: maximum resident set size %ld kb", ru->ru_maxrss);
   log_debug("rusage: page reclaims %ld", ru->ru_minflt);
   log_debug("rusage: page faults %ld", ru->ru_majflt);
   log_debug("rusage: block input operations %ld", ru->ru_inblock);
@@ -121,14 +121,18 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   if (wait4(child_pid, &status, 0, &ru) == -1)
   {
     LOG_INTERNAL_ERROR("wait4 error");
-    exit(EXIT_FAILURE);
   }
   gettimeofday(end_time, NULL);
   log_rusage(&ru);
-  _result->real_time_used = ((end_time->tv_sec - start_time->tv_sec) * 1000 + (end_time->tv_usec - start_time->tv_usec) / 1000);
-  _result->real_time_used_us = (end_time->tv_sec * 1000 * 1000 + end_time->tv_usec - start_time->tv_sec * 1000 * 1000 - start_time->tv_usec);
-  _result->cpu_time_used = ru.ru_utime.tv_sec * 1000 + ru.ru_utime.tv_usec / 1000;
-  _result->cpu_time_used_us = ru.ru_utime.tv_sec * 1000 * 1000 + ru.ru_utime.tv_usec;
+  const struct timeval real_time_tv = {
+      (end_time->tv_sec - start_time->tv_sec),
+      (end_time->tv_usec - start_time->tv_usec),
+  };
+  _result->real_time_used = tv_to_ms(&real_time_tv);
+  _result->real_time_used_us = tv_to_us(&real_time_tv);
+  // 只使用 user time，原因看 README 的 FAQ
+  _result->cpu_time_used = tv_to_ms(&ru.ru_utime);
+  _result->cpu_time_used_us = tv_to_us(&ru.ru_utime);
   // 在 linux, ru_maxrss 单位是 kb
   _result->memory_used = ru.ru_maxrss;
 
@@ -201,7 +205,6 @@ int run(struct Config *_config, struct Result *_result)
     // The fork() function may fail if:
     //   Insufficient storage space is available.
     LOG_INTERNAL_ERROR("error in fork");
-    exit(EXIT_FAILURE);
   }
   else if (child_pid == 0)
   {
