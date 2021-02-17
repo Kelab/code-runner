@@ -73,7 +73,7 @@ Options:
   -l    Path of the log file
 ```
 
-- command 用户程序地址
+- command 用户程序地址，如果命令有空格，需要给命令加上双引号，如：`"node main.js"`
 - time_limit 时间单位是 ms
 - memory_limit 内存单位是 kb
 - input_path 判题的标准输入文件位置
