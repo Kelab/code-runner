@@ -79,19 +79,19 @@ void child_process(struct Config *_config)
       CHILD_ERROR_EXIT("output_fd");
     }
   }
-  // err_fd = output_fd;
-  // if (err_fd != -1)
-  // {
-  //   if (dup2(err_fd, fileno(stderr)) == -1)
-  //   {
-  //     CHILD_ERROR_EXIT("err_fd");
-  //   }
-  // }
+  err_fd = output_fd;
+  if (err_fd != -1)
+  {
+    if (dup2(err_fd, fileno(stderr)) == -1)
+    {
+      CHILD_ERROR_EXIT("err_fd");
+    }
+  }
 
   log_debug("exec %s", _config->cmd[0]);
   char *envp[] = {NULL};
 
-  execve(_config->cmd[0], _config->cmd, envp);
+  execvpe(_config->cmd[0], _config->cmd, envp);
   CHILD_ERROR_EXIT("exec cmd error");
 }
 
