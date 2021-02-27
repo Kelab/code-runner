@@ -12,19 +12,20 @@
 
 const char *argp_program_version = "judge 0.1.0";
 
-static char doc[] =
-    "judge -- made with hard work 🧡...\
-\n  e.g. `judge node main.js -t 1000 --mco` \
-\n  If you want to pass in parameters to <command> with a leading `-`, you need use `--` to escape them.\
-\n  e.g. 1. `judge -t 1000 --mco python main.py -- -OO` \
-\n  e.g. 2. `judge node -m 2000 -t 1000 -- --version` \
-\n or you can just use `judge -m 2000 -t 1000 -- node --version` \
-\n the arguments following a special \
-`--' argument (which prevents anything following being interpreted as an \
-option).\
-\vThat's all.";
+static char args_doc[] = "<command> [args for command]";
 
-static char args_doc[] = "<command> [args...]";
+static char doc[] =
+    "judge -- made with hard work and 🧡\
+\n\
+\ne.g. `judge node main.js -t 1000 --mco` \
+\v\
+\nIf you want to pass a option(has a leading `-`) to <command> , you need to put them after the \
+`--` argument(which prevents anything following being interpreted as an option).\
+\n  e.g. \
+\n    - judge -t 1000 --mco python main.py -- -OO \
+\n    - judge node -t 1000 -- --version \
+\n    - judge -t 1000 -- node --version \
+\nThat's all.";
 
 /* Keys for options without short-options. */
 #define OPT_REAL_TIME_LIMIT 2

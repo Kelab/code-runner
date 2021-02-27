@@ -35,90 +35,38 @@ make libjudge
 
 ## 运行
 
-```plain
-❯ ./judge
 
-Usage: judge <command> [<args>]
+下面简单介绍一个例子：
 
-Available commands are:
+![image](https://user-images.githubusercontent.com/13938334/109389825-1b264b00-7949-11eb-9b07-11778ba3c77b.png)
 
-judge   Run then compare.
-run     Run the specified command only, do not check the result.
-check   Compare the user's output and right answer to get the result.
+判本仓库根目录下 `tests/node/` 的题。
 
-Type 'judge help <command>' to get help for a specific command.
+只需要执行 `./judge [选项...] <命令> [参数...]` 即可，比如： 
+
+```sh
+./judge -l node.log -t 1000 -i ./tests/node/1.in -o ./tests/node/1.out -u node.tmp.out node ./tests/node/main.js
 ```
 
-程序有三种命令模式：
+各参数意义：
 
-- judge
-  完整判题模式
-- run
-  只根据输入运行用户程序
-- check
-  给入题目答案数据和用户输出的数据，输出一个判题结果。
+- `-l, --log_file` Log 日志路径
+- `-t, --cpu_time_limit` 限制 CPU 时间，单位是 ms
+- `-i, --system_input` 从该文件读入数据当成待判程序的标准输入，如果不设置，也可以直接向程序使用 pipe 的方式输入数据。
+- `-o, --system_output` 判题数据的输出，用于比对程序是否运行正确。
+- `-u, --user_output` 将待判程序的标准输出写入该文件。
 
-### judge 模式
+更多选项可以输入 `./judge -?` 查看帮助。
 
-```plain
-❯ ./judge help judge
+如果执行待判程序的命令的参数中需要使用到 `-`（如想用判题程序执行： `python --version`），那你需要将这个参数放在 `--` 后，如：
 
-Usage: judge judge <command> <time_limit> <memory_limit> <testdata_input_path> <testdata_output_path> <tmp_output_path> [options]
-
-e.g. judge process with input data file and tmp output path, and log path.
-        ./judge judge ./main 1000 2048 ./tests/1/1.in ./tests/1/1.out 1.tmp.out -l 1.log
-
-Options:
-
-  -l    Path of the log file
+```bash
+./judge [选项...] <命令> [参数...] -- [放在这里...]
+# 比如
+./judge -t 2000 -- python --version
 ```
 
-- command 用户程序地址，如果命令有空格，需要给命令加上双引号，如：`"node main.js"`
-- time_limit 时间单位是 ms
-- memory_limit 内存单位是 kb
-- input_path 判题的标准输入文件位置
-- output_path 判题的标准输出文件位置
-- tmp_output_path 用户程序执行的标准输出位置（用于判断答案是否正确）
-- -l 参数可以传入一个 log 文件的地址，会把判题 log 写入该文件，方便调试。
-
-之所以要多传入一个 `<tmp_output_path>`(`1.tmp.out`) 是因为可以：
-
-1. 方便多步对程序执行结果进行判断。
-2. 不用把判题输出保留在内存中。
-
-### run 模式
-
-```plain
-❯ ./judge help run
-
-Usage: judge run <command> <time_limit> <memory_limit> <testdata_input_path> <tmp_output_path> [options]
-
-e.g. Run process with input data file and tmp output path, and log path.
-        ./judge run ./main 1000 2048 ./tests/1/1.in 1.tmp.out -l 1.log
-
-Options:
-
-  -l    Path of the log file
-```
-
-各字段意义见 [judge 模式](#judge-模式)。
-
-### check 模式
-
-```plain
-❯ ./judge help check
-
-Usage: judge check <testdata_output_path> <tmp_output_path> [options]
-
-e.g. Judge answers with <testdata_output_path> and <tmp_output_path>.
-        ./judge check ./tests/1/1.out 1.tmp.out -l 1.log
-
-Options:
-
-  -l    Path of the log file%
-```
-
-各字段意义见 [judge 模式](#judge-模式)。
+反正只要是传给待判程序的，并且带 `-` 的参数，就要放在 `--` 后面，其他的判题程序的参数只要放在 `--` 前面任意位置就好。
 
 ## 运行结果
 
@@ -165,17 +113,6 @@ status 是判题结果：
 `real_time` 是用户程序真实运行的时间。
 
 `memory_used` 在 linux 下单位是 kb。
-
-### check 模式输出
-
-如果运行 `check` 模式的话，只会输出一个 int 值代表判题结果，如：
-
-```bash
-❯ ./judge check -l 1.log ./tests/1/1.out 1.tmp.out
-0
-```
-
-说明答案正确，判题状态是 ACCEPT。
 
 ## FAQ
 
