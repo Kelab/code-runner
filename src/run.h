@@ -14,7 +14,6 @@ int run(struct Config *_config, struct Result *_result);
 #define CHILD_ERROR_EXIT(message)                                                           \
   {                                                                                         \
     log_fatal("child process error message: %s, strerror: %s; ", message, strerror(errno)); \
-    printf("child process error message: %s, strerror: %s; ", message, strerror(errno));    \
     close_fd(input_fd);                                                                     \
     close_fd(output_fd);                                                                    \
     close_fd(err_fd);                                                                       \
@@ -22,7 +21,7 @@ int run(struct Config *_config, struct Result *_result);
     exit(EXIT_FAILURE);                                                                     \
   }
 
-#define LOG_INTERNAL_ERROR(message)                                                    \
+#define INTERNAL_ERROR_EXIT(message)                                                   \
   {                                                                                    \
     log_fatal("message: %s, Interlnal Error: strerror: %s", message, strerror(errno)); \
     exit(EXIT_FAILURE);                                                                \

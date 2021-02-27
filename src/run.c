@@ -70,6 +70,10 @@ void child_process(struct Config *_config)
       CHILD_ERROR_EXIT("input_fd");
     }
   }
+  else
+  {
+    log_error("error open in_file");
+  }
   output_fd = open(_config->user_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
   if (output_fd != -1)
   {
@@ -79,6 +83,10 @@ void child_process(struct Config *_config)
       CHILD_ERROR_EXIT("output_fd");
     }
   }
+  else
+  {
+    log_error("error open user_out_file");
+  }
   err_fd = output_fd;
   if (err_fd != -1)
   {
@@ -86,6 +94,10 @@ void child_process(struct Config *_config)
     {
       CHILD_ERROR_EXIT("err_fd");
     }
+  }
+  else
+  {
+    log_error("error open err_fd");
   }
 
   log_debug("exec %s", _config->cmd[0]);
@@ -120,7 +132,7 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   struct rusage ru;
   if (wait4(child_pid, &status, 0, &ru) == -1)
   {
-    LOG_INTERNAL_ERROR("wait4 error");
+    INTERNAL_ERROR_EXIT("wait4 error");
   }
   gettimeofday(end_time, NULL);
   log_rusage(&ru);
@@ -192,9 +204,7 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
 
 int run(struct Config *_config, struct Result *_result)
 {
-  // record real running time: end_time - start_time
   struct timeval start_time, end_time;
-
   gettimeofday(&start_time, NULL);
   pid_t child_pid = fork();
   if (child_pid < 0)
@@ -204,7 +214,7 @@ int run(struct Config *_config, struct Result *_result)
     //   or the system - imposed limit on the total number of processes under execution system - wide or by a single user{CHILD_MAX} would be exceeded.
     // The fork() function may fail if:
     //   Insufficient storage space is available.
-    LOG_INTERNAL_ERROR("error in fork");
+    INTERNAL_ERROR_EXIT("error in fork");
   }
   else if (child_pid == 0)
   {

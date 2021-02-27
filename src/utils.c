@@ -8,23 +8,6 @@
 #include "constants.h"
 #include "utils.h"
 
-void split(char **arr, char *str, const char *del)
-{
-  char *s = NULL;
-  s = strtok(str, del);
-  while (s != NULL)
-  {
-    *arr++ = s;
-    s = strtok(NULL, del);
-  }
-  *arr++ = NULL;
-}
-
-void process_cmd(char **arr, char *str)
-{
-  split(arr, str, " ");
-}
-
 void close_fd(int fd)
 {
   if (fd > 0)
