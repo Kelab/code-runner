@@ -14,6 +14,7 @@ int run(struct Config *_config, struct Result *_result);
 #define CHILD_ERROR_EXIT(message)                                                           \
   {                                                                                         \
     log_fatal("child process error message: %s, strerror: %s; ", message, strerror(errno)); \
+    printf("child process error message: %s, strerror: %s; ", message, strerror(errno));    \
     close_fd(input_fd);                                                                     \
     close_fd(output_fd);                                                                    \
     close_fd(err_fd);                                                                       \

@@ -3,215 +3,106 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <string.h>
+#include <error.h>
+#include <argp.h>
 
 #include "constants.h"
 #include "utils.h"
 
-extern char *optarg;
-extern int optind;
+const char *argp_program_version = "judge 0.1.0";
 
-void usage()
-{
-  printf("Usage: judge <command> [<args>]\n");
-  printf("\n");
-  printf("Available commands are:\n");
-  printf("\n");
-  printf("judge\tRun then compare.\n");
-  printf("run\tRun the specified command only, do not check the result.\n");
-  printf("check\tCompare the user's output and right answer to get the result.\n");
-  printf("\n");
-  printf("Type 'judge help <command>' to get help for a specific command.\n");
-}
+static char doc[] =
+    "judge -- made with hard work 🧡...\
+\n  e.g. `judge node main.js -t 1000 --mco` \
+\n  If you want to pass in parameters to <command> with a leading `-`, you need use `--` to escape them.\
+\n  e.g. 1. `judge -t 1000 --mco python main.py -- -OO` \
+\n  e.g. 2. `judge node -m 2000 -t 1000 -- --version` \
+\n or you can just use `judge -m 2000 -t 1000 -- node --version` \
+\n the arguments following a special \
+`--' argument (which prevents anything following being interpreted as an \
+option).\
+\vThat's all.";
 
-void common_options()
-{
-  printf("Options:\n");
-  printf("\n");
-  //  --log-file
-  printf("  -l\tPath of the log file");
-}
+static char args_doc[] = "<command> [args...]";
 
-void get_opts_str(char str[], char *opts[], int length)
-{
-  char *tmp = NULL;
+/* Keys for options without short-options. */
+#define OPT_REAL_TIME_LIMIT 2
+#define OPT_MEMORY_CHECK_ONLY 3
 
-  for (int i = 0; i < length; i++)
-  {
-    if (asprintf(&tmp, "<%s> ", opts[i]) < 0)
-      break;
-    if (i == 0)
-    {
-      strcpy(str, tmp);
-    }
-    else
-    {
-      strcat(str, tmp);
-    }
-    if (tmp != NULL)
-    {
-      free(tmp);
-      tmp = NULL;
-    }
-  }
-}
+#define OPT_CPU_TIME_LIMIT 't'
+#define OPT_MEMORY_LIMIT 'm'
+#define OPT_SYSTEM_INPUT 'i'
+#define OPT_SYSTEM_OUTPUT 'o'
+#define OPT_USER_OUTPUT 'u'
+#define OPT_LOG_FILE 'l'
 
-#define JUDGE_OPTS_LENGTH 6
+static struct argp_option options[] = {
+    {"cpu_time_limit", OPT_CPU_TIME_LIMIT, "MS", 0, "cpu_time limit (default 0) ms, when 0, not check", 1},
+    {"memory_limit", OPT_MEMORY_LIMIT, "KB", 0, "memory limit (default 0) kb, when 0, not check", 1},
+    {"system_input", OPT_SYSTEM_INPUT, "FILE", 0, "system_input path", 2},
+    {"system_output", OPT_SYSTEM_OUTPUT, "FILE", 0, "system_output path", 2},
+    {"user_output", OPT_USER_OUTPUT, "FILE", 0, "user out -> file path", 2},
 
-char *judge_opts[JUDGE_OPTS_LENGTH] = {
-    "command",
-    "time_limit",
-    "memory_limit",
-    "testdata_input_path",
-    "testdata_output_path",
-    "tmp_output_path",
+    {0, 0, 0, 0, "Optional options:"},
+    {"real_time_limit", OPT_REAL_TIME_LIMIT, "MS", 0, "real_time_limit (default 5000) ms"},
+    {"memory_check_only", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ARG_OPTIONAL, "not set memory limit in run, (default not check)"},
+    {"mco", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ALIAS},
+    {"log_file", OPT_LOG_FILE, "FILE", 0, "log file path, (default not output)"},
+    {0},
 };
 
-void judge_usage()
+static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
-  char str[80];
-  get_opts_str(str, judge_opts, JUDGE_OPTS_LENGTH);
-  printf("Usage: judge judge %s [options]\n", str);
-  printf("\n");
-  printf("e.g. judge process with input data file and tmp output path, and log path.\n");
-  printf("\t./judge judge ./main 1000 2048 ./tests/1/1.in ./tests/1/1.out 1.tmp.out -l 1.log\n");
-  printf("\n");
-  common_options();
+  /* input 是之前我们调用 argp_parse 传入的第四个参数 */
+  struct Config *config = state->input;
+  switch (key)
+  {
+  case OPT_CPU_TIME_LIMIT:
+    config->cpu_time_limit = arg ? atoi(arg) : 0;
+    break;
+  case OPT_MEMORY_LIMIT:
+    config->memory_limit = arg ? atoi(arg) : 0;
+    break;
+  case OPT_SYSTEM_INPUT:
+    config->in_file = arg;
+    break;
+  case OPT_SYSTEM_OUTPUT:
+    config->out_file = arg;
+    break;
+  case OPT_USER_OUTPUT:
+    config->user_out_file = arg;
+    break;
+  case OPT_REAL_TIME_LIMIT:
+    config->real_time_limit = arg ? atoi(arg) : 5000;
+    break;
+  case OPT_MEMORY_CHECK_ONLY:
+    config->memory_check_only = 1;
+    break;
+  case OPT_LOG_FILE:
+    config->log_file = arg;
+    break;
+  case ARGP_KEY_NO_ARGS:
+    argp_usage(state);
+  case ARGP_KEY_ARG:
+    config->cmd = &state->argv[state->next - 1];
+    /* by setting state->next to the end
+         of the arguments, we can force argp to stop parsing here and
+         return. */
+    state->next = state->argc;
+    break;
+  default:
+    return ARGP_ERR_UNKNOWN;
+  }
+  return 0;
 }
 
-#define RUN_OPTS_LENGTH 5
+static struct argp judge_argp = {options, parse_opt, args_doc, doc};
 
-char *run_opts[RUN_OPTS_LENGTH] = {
-    "command",
-    "time_limit",
-    "memory_limit",
-    "testdata_input_path",
-    "tmp_output_path",
-};
-
-void run_usage()
+int parse_argv(int argc, char **argv, struct Config *config)
 {
-  char str[80];
-  get_opts_str(str, run_opts, RUN_OPTS_LENGTH);
-  printf("Usage: judge run %s [options]\n", str);
-  printf("\n");
-  printf("e.g. Run process with input data file and tmp output path, and log path.\n");
-  printf("\t./judge run ./main 1000 2048 ./tests/1/1.in 1.tmp.out -l 1.log\n");
-  printf("\n");
-  common_options();
-}
-
-#define CHECK_OPTS_LENGTH 2
-
-char *check_opts[CHECK_OPTS_LENGTH] = {
-    "testdata_output_path",
-    "tmp_output_path",
-};
-
-void check_usage()
-{
-  char str[80];
-  get_opts_str(str, check_opts, CHECK_OPTS_LENGTH);
-  printf("Usage: judge check %s [options]\n", str);
-  printf("\n");
-  printf("e.g. Judge answers with <testdata_output_path> and <tmp_output_path>.\n");
-  printf("\t./judge check ./tests/1/1.out 1.tmp.out -l 1.log\n");
-  printf("\n");
-  common_options();
-}
-
-int last_optind = 0;
-char *next(int argc, char *argv[])
-{
-  last_optind++;
-  if (optind + last_optind >= argc)
-  {
-    printf("缺少参数。\n");
-    exit(EXIT_FAILURE);
-  }
-  return argv[optind + last_optind];
-}
-
-#define NEXT_ARG next(argc, argv)
-
-void parse_argv(int argc, char *argv[], struct Config *config)
-{
-  if (argc == 1)
-  {
-    usage();
-    exit(EXIT_SUCCESS);
-  }
-
-  int opt;
-  char *string = "l:";
-
-  while ((opt = getopt(argc, argv, string)) != -1)
-  {
-    switch (opt)
-    {
-    case 'l':
-      config->log_file = optarg;
-      break;
-    case '?':
-      printf("Unknown option: %c\n", (char)optopt);
-    }
-  }
-
-  char *mode = argv[optind];
-
-  if (strcmp(mode, "help") == 0)
-  {
-    if (argc == 2)
-    {
-      usage();
-    }
-    else
-    {
-      char *command = argv[optind + 1];
-      if (strcmp(command, "run") == 0)
-      {
-        run_usage();
-      }
-      else if (strcmp(command, "check") == 0)
-      {
-        check_usage();
-      }
-      else if (strcmp(command, "judge") == 0)
-      {
-        judge_usage();
-      }
-      else
-      {
-        printf("Unknown command: %s\n\n", command);
-        usage();
-      }
-    }
-    exit(EXIT_SUCCESS);
-  }
-  else if (strcmp(mode, "judge") == 0)
-  {
-    config->judge_mode = 1;
-    process_cmd(config->cmd, NEXT_ARG);
-    config->time_limit = atoi(NEXT_ARG);
-    config->memory_limit = atoi(NEXT_ARG);
-    config->in_file = NEXT_ARG;
-    config->out_file = NEXT_ARG;
-    config->user_out_file = NEXT_ARG;
-  }
-  else if (strcmp(mode, "run") == 0)
-  {
-    config->run_mode = 1;
-    process_cmd(config->cmd, NEXT_ARG);
-    config->time_limit = atoi(NEXT_ARG);
-    config->memory_limit = atoi(NEXT_ARG);
-    config->in_file = NEXT_ARG;
-    config->user_out_file = NEXT_ARG;
-  }
-  else if (strcmp(mode, "check") == 0)
-  {
-    config->check_mode = 1;
-    config->out_file = NEXT_ARG;
-    config->user_out_file = NEXT_ARG;
-  }
+  /* Parse our arguments; every option seen by parse_opt will be
+     reflected in arguments. */
+  argp_parse(&judge_argp, argc, argv, 0, 0, config);
+  return 0;
 }

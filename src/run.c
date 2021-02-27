@@ -27,12 +27,12 @@ void child_process(struct Config *_config)
   int output_fd = -1;
   int err_fd = -1;
 
-  if (_config->time_limit != RESOURCE_UNLIMITED)
+  if (_config->cpu_time_limit != RESOURCE_UNLIMITED)
   {
     // CPU time limit in seconds.
-    log_debug("set time_limit");
+    log_debug("set cpu_time_limit");
     struct rlimit max_time_rl;
-    max_time_rl.rlim_cur = max_time_rl.rlim_max = (rlim_t)((_config->time_limit + 1000) / 1000);
+    max_time_rl.rlim_cur = max_time_rl.rlim_max = (rlim_t)((_config->cpu_time_limit + 1000) / 1000);
     if (setrlimit(RLIMIT_CPU, &max_time_rl))
       CHILD_ERROR_EXIT("set RLIMIT_CPU failure");
   }
@@ -163,7 +163,7 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
       // 可能是超过资源限制之后的被 SIGKILL 杀掉
       if (_result->memory_used > _config->memory_limit)
         _result->status = MEMORY_LIMIT_EXCEEDED;
-      else if (_result->cpu_time_used > _config->time_limit)
+      else if (_result->cpu_time_used > _config->cpu_time_limit)
         _result->status = TIME_LIMIT_EXCEEDED;
       else
         _result->status = RUNTIME_ERROR;
@@ -182,7 +182,7 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
     }
     else
     {
-      if (_result->cpu_time_used > _config->time_limit)
+      if (_result->cpu_time_used > _config->cpu_time_limit)
         _result->status = TIME_LIMIT_EXCEEDED;
       else if (_result->memory_used > _config->memory_limit)
         _result->status = MEMORY_LIMIT_EXCEEDED;

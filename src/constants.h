@@ -34,10 +34,12 @@ struct Config
   int run_mode;
   int check_mode;
   int judge_mode;
-  char *cmd[CMD_MAX_LENGTH];
+  char **cmd;
   char *log_file;
-  int time_limit;
+  int cpu_time_limit;
+  int real_time_limit;
   int memory_limit;
+  int memory_check_only;
   char *in_file;
   char *out_file;
   char *user_out_file;

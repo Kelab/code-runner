@@ -44,18 +44,12 @@ c: $(C_BASE)/main.c
 	$(CC) $< -o main
 
 testc: c judge
-	./judge judge -l c.log ./main 1000 2048 $(C_BASE)/1.in $(C_BASE)/1.out c.tmp.out
-
-testcr: c judge
-	./judge run -l c.log ./main 1000 2048 $(C_BASE)1.in c.tmp.out
-
-testcc: c judge
-	./judge check -l c.log $(C_BASE)/1.out c.tmp.out
+	./judge -l c.log -t 1000 -m 2048 -i $(C_BASE)/1.in -o $(C_BASE)/1.out -u c.tmp.out ./main
 
 NODE_BASE=./tests/node
 
 testnode: judge
-	./judge judge -l node.log "node $(NODE_BASE)/main.js" 1000 0 $(NODE_BASE)/1.in $(NODE_BASE)/1.out node.tmp.out
+	./judge -l node.log -t 1000 -i $(NODE_BASE)/1.in -o $(NODE_BASE)/1.out -u node.tmp.out -- node $(NODE_BASE)/main.js
 
 
 cleantest:
