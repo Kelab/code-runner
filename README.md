@@ -35,14 +35,13 @@ make libjudge
 
 ## 运行
 
-
 下面简单介绍一个例子：
 
-![image](https://user-images.githubusercontent.com/13938334/109389825-1b264b00-7949-11eb-9b07-11778ba3c77b.png)
+![example](https://user-images.githubusercontent.com/13938334/109389825-1b264b00-7949-11eb-9b07-11778ba3c77b.png)
 
 判本仓库根目录下 `tests/node/` 的题。
 
-只需要执行 `./judge [选项...] <命令> [参数...]` 即可，比如： 
+只需要执行 `./judge [选项...] <命令> [参数...]` 即可，比如：
 
 ```sh
 ./judge -l node.log -t 1000 -i ./tests/node/1.in -o ./tests/node/1.out -u node.tmp.out node ./tests/node/main.js
@@ -56,6 +55,8 @@ make libjudge
 - `-o, --system_output` 判题数据的输出，用于比对程序是否运行正确。
 - `-u, --user_output` 将待判程序的标准输出写入该文件。
 
+这里没有用到 `-m` 限制 Memory 的使用，因为在执行 Node.js 时，限制内存会导致 `node` 程序无法正常执行。
+
 更多选项可以输入 `./judge -?` 查看帮助。
 
 如果执行待判程序的命令的参数中需要使用到 `-`（如想用判题程序执行： `python --version`），那你需要将这个参数放在 `--` 后，如：
@@ -66,7 +67,7 @@ make libjudge
 ./judge -t 2000 -- python --version
 ```
 
-反正只要是传给待判程序的，并且带 `-` 的参数，就要放在 `--` 后面，其他的判题程序的参数只要放在 `--` 前面任意位置就好。
+反正只要是「想传给待判程序的，并且以 `-` 开头的的参数」，就要放在 `--` 后面，只要是放在 `--` 前面任意位置的以 `-` 开头的的参数就会认为是判题程序的参数。
 
 ## 运行结果
 
@@ -154,40 +155,6 @@ CPU 时间有时候花费是在运行用户的程序上，而有时候花费在�
 ### 在其他语言中调用
 
 可以以启动子进程的方式来调用 `judge`，然后捕获控制台的输出即可。  
-比如：
-
-```python
-import json
-import subprocess
-
-
-def judge(proc_args):
-    proc = subprocess.Popen(proc_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate()
-    if err:
-        raise ValueError("Error occurred while calling judge: {}".format(err))
-
-    return json.loads(out.decode("utf-8"))
-
-
-proc_args = [
-    "./judge",
-    "judge",
-    "./main",
-    "1000",
-    "2048",
-    "./tests/1/1.in",
-    "./tests/1/1.out",
-    "1.tmp.out",
-    "-l",
-    "1.log",
-]
-
-result = judge(proc_args)
-print("result: ", result)
-# result:  {'status': 0, 'cpu_time_used': 0, 'cpu_time_used_us': 579, 'real_time_used': 1, 'real_time_used_us': 631, 'memory_used': 1500, 'signal': 0, 'exit_code': 0}
-```
-
 
 ## 开源致谢
 
