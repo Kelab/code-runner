@@ -37,25 +37,25 @@ make libjudge
 
 下面简单介绍一个例子：
 
-![example](https://user-images.githubusercontent.com/13938334/109389825-1b264b00-7949-11eb-9b07-11778ba3c77b.png)
+![image](https://user-images.githubusercontent.com/13938334/109407241-1baafa00-79ba-11eb-8f14-51fa0ee23d27.png)
 
 判本仓库根目录下 `tests/node/` 的题。
 
 只需要执行 `./judge [选项...] <命令> [参数...]` 即可，比如：
 
 ```sh
-./judge -l node.log -t 1000 -i ./tests/node/1.in -o ./tests/node/1.out -u node.tmp.out node ./tests/node/main.js
+./judge -l node.log -t 1000 -m 2048 --mco -i ./tests/node/1.in -o ./tests/node/1.out -u node.tmp.out -- node ./tests/node/main.js
 ```
 
 各参数意义：
 
 - `-l, --log_file` Log 日志路径
-- `-t, --cpu_time_limit` 限制 CPU 时间，单位是 ms
+- `-t, --cpu_time_limit` CPU 时间限制 ，单位是 ms，用于判断是否超过 CPU 时间限制。
+- `-m, --memory_limit` 内存限制，单位是 kb，用于判断是否超过内存限制。
+- `--memory_check_only, --mco` 只进行内存限制的检查（要确认判题结果），而不进行真正的内存限制，因为在执行 Node.js 时，限制内存会导致 `node` 程序无法正常执行，会报段错误。
 - `-i, --system_input` 从该文件读入数据当成待判程序的标准输入，如果不设置，也可以直接向程序使用 pipe 的方式输入数据。
 - `-o, --system_output` 判题数据的输出，用于比对程序是否运行正确。
 - `-u, --user_output` 将待判程序的标准输出写入该文件。
-
-这里没有用到 `-m` 限制 Memory 的使用，因为在执行 Node.js 时，限制内存会导致 `node` 程序无法正常执行。
 
 更多选项可以输入 `./judge -?` 查看帮助。
 

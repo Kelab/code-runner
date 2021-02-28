@@ -64,7 +64,7 @@ void log_config(struct Config *config)
   log_debug("config: cpu_time_limit %d ms", config->cpu_time_limit);
   log_debug("config: real_time_limit %d ms", config->real_time_limit);
   log_debug("config: memory_limit %d kb", config->memory_limit);
-  log_debug("config: memory_check_only %d kb", config->memory_check_only);
+  log_debug("config: memory_check_only %d", config->memory_check_only);
   log_debug("config: in_file %s", config->in_file);
   log_debug("config: out_file %s", config->out_file);
   log_debug("config: user_out_file %s", config->user_out_file);
@@ -113,10 +113,12 @@ int main(int argc, char *argv[])
       CLOSE_LOGGER_FILE();
       exit(EXIT_FAILURE);
     }
-
-    if (config.judge_mode == 1)
+    if (result.status == PENDING || result.status == ACCEPTED)
     {
-      diff(&config, &result.status);
+      if (config.judge_mode == 1)
+      {
+        diff(&config, &result.status);
+      }
     }
     print_result(&result);
   }

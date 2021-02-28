@@ -40,15 +40,18 @@ void child_process(struct Config *_config)
   // 注意，设置 memory_limit 会导致有些程序 crash，比如 python, node
   if (_config->memory_limit != RESOURCE_UNLIMITED)
   {
-    // The maximum size of the process's virtual memory (address space) in bytes.
-    log_debug("set memory_limit");
+    if (_config->memory_check_only == 0)
+    {
+      // The maximum size of the process's virtual memory (address space) in bytes.
+      log_debug("set memory_limit");
 
-    struct rlimit max_memory_rl;
-    // 为了避免代码是正确的，但是因为超过内存 oom 而被判定为 re。
-    // 如果程序占用低于两倍，最后再重新检查内存占用和配置的关系，就可以判定为超内存而不是 re，如果超过两倍，那就真的 re 了（可能会被 kill）。
-    max_memory_rl.rlim_max = max_memory_rl.rlim_cur = _config->memory_limit * 1024 * 2;
-    if (setrlimit(RLIMIT_AS, &max_memory_rl))
-      CHILD_ERROR_EXIT("set RLIMIT_AS failure");
+      struct rlimit max_memory_rl;
+      // 为了避免代码是正确的，但是因为超过内存 oom 而被判定为 re。
+      // 如果程序占用低于两倍，最后再重新检查内存占用和配置的关系，就可以判定为超内存而不是 re，如果超过两倍，那就真的 re 了（可能会被 kill）。
+      max_memory_rl.rlim_max = max_memory_rl.rlim_cur = _config->memory_limit * 1024 * 2;
+      if (setrlimit(RLIMIT_AS, &max_memory_rl))
+        CHILD_ERROR_EXIT("set RLIMIT_AS failure");
+    }
   }
 
   log_debug("set max_output_size");
@@ -184,9 +187,9 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   }
   else
   {
-    log_debug("child process exit normal");
     // 程序正常结束，此时可通过WEXITSTATUS(status)获取进程退出状态(exit时参数)
     _result->exit_code = WEXITSTATUS(status);
+    log_debug("child process exit_code %d", _result->exit_code);
 
     if (_result->exit_code != 0)
     {
@@ -195,9 +198,13 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
     else
     {
       if (_result->cpu_time_used > _config->cpu_time_limit)
+      {
         _result->status = TIME_LIMIT_EXCEEDED;
+      }
       else if (_result->memory_used > _config->memory_limit)
+      {
         _result->status = MEMORY_LIMIT_EXCEEDED;
+      }
     }
   }
 }

@@ -49,7 +49,7 @@ testc: c judge
 NODE_BASE=./tests/node
 
 testnode: judge
-	./judge -l node.log -t 1000 -i $(NODE_BASE)/1.in -o $(NODE_BASE)/1.out -u node.tmp.out -- node $(NODE_BASE)/main.js
+	./judge -l node.log -t 1000 -m 2048 --mco -i $(NODE_BASE)/1.in -o $(NODE_BASE)/1.out -u node.tmp.out -- node $(NODE_BASE)/main.js
 
 
 cleantest:
