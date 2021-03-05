@@ -142,8 +142,6 @@ CPU 时间有时候花费是在运行用户的程序上，而有时候花费在�
 
 这就是操作系统如何调节硬件的使用。
 
-所以判题程序记录的时间仅记录了 `ru_utime`。
-
 ### 常见 `signal` 和 `exit_code`
 
 `signal`(<https://man7.org/linux/man-pages/man7/signal.7.html>):

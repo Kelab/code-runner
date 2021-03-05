@@ -145,9 +145,12 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   };
   _result->real_time_used = tv_to_ms(&real_time_tv);
   _result->real_time_used_us = tv_to_us(&real_time_tv);
-  // 只使用 user time，原因看 README 的 FAQ
-  _result->cpu_time_used = tv_to_ms(&ru.ru_utime);
-  _result->cpu_time_used_us = tv_to_us(&ru.ru_utime);
+  const struct timeval cpu_time_tv = {
+      ((&ru.ru_utime)->tv_sec + (&ru.ru_stime)->tv_sec),
+      ((&ru.ru_utime)->tv_usec + (&ru.ru_stime)->tv_usec),
+  };
+  _result->cpu_time_used = tv_to_ms(&cpu_time_tv);
+  _result->cpu_time_used_us = tv_to_us(&cpu_time_tv);
   // 在 linux, ru_maxrss 单位是 kb
   _result->memory_used = ru.ru_maxrss;
 
