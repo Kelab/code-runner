@@ -56,14 +56,14 @@ void child_process(struct Config *_config)
     }
   }
 
-  log_debug("set max_output_size");
-  // set max output size limit
-  struct rlimit max_output_size;
-  max_output_size.rlim_cur = max_output_size.rlim_max = MAX_OUTPUT;
-  if (setrlimit(RLIMIT_FSIZE, &max_output_size) != 0)
-  {
-    CHILD_ERROR_EXIT("set RLIMIT_FSIZE failure");
-  }
+  // log_debug("set max_output_size");
+  // // set max output size limit
+  // struct rlimit max_output_size;
+  // max_output_size.rlim_cur = max_output_size.rlim_max = MAX_OUTPUT;
+  // if (setrlimit(RLIMIT_FSIZE, &max_output_size) != 0)
+  // {
+  //   CHILD_ERROR_EXIT("set RLIMIT_FSIZE failure");
+  // }
 
   // 重定向 标准输出IO 到相应的文件中
   input_fd = open(_config->in_file, O_RDONLY | O_CREAT, 0700);

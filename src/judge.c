@@ -23,8 +23,6 @@ void init_result(struct Result *_result)
 
 void init_config(struct Config *config)
 {
-  config->judge_mode = 1;
-  config->run_mode = config->check_mode = 0;
   config->memory_check_only = 0;
   config->cpu_time_limit = config->real_time_limit = config->memory_limit = 0;
   config->log_file = config->in_file = config->out_file = config->user_out_file = '\0';
@@ -52,9 +50,6 @@ FILE *set_logger(struct Config *config)
 
 void log_config(struct Config *config)
 {
-  log_debug("config: run_mode %d", config->run_mode);
-  log_debug("config: check_mode %d", config->check_mode);
-  log_debug("config: judge_mode %d", config->judge_mode);
   int i = 0;
   while ((config->cmd)[i])
   {
@@ -97,31 +92,17 @@ int main(int argc, char *argv[])
   log_config(&config);
   init_result(&result);
 
-  if (config.check_mode == 1)
+  run(&config, &result);
+  // 运行失败的话，直接输出结果。
+  if (result.exit_code || result.signal)
   {
-    int status = -1;
-    diff(&config, &status);
-    printf("%d\n", status);
-  }
-  else
-  {
-    run(&config, &result);
-    // 运行失败的话，直接输出结果。
-    if (result.exit_code || result.signal)
-    {
-      print_result(&result);
-      CLOSE_LOGGER_FILE();
-      exit(EXIT_FAILURE);
-    }
-    if (result.status == PENDING || result.status == ACCEPTED)
-    {
-      if (config.judge_mode == 1)
-      {
-        diff(&config, &result.status);
-      }
-    }
     print_result(&result);
+    CLOSE_LOGGER_FILE();
+    exit(EXIT_FAILURE);
   }
+  if (result.status == PENDING || result.status == ACCEPTED)
+    diff(&config, &result);
+  print_result(&result);
   CLOSE_LOGGER_FILE();
   return 0;
 }

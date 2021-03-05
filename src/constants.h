@@ -1,19 +1,26 @@
 #ifndef CONSTANTS_HEADER
 #define CONSTANTS_HEADER
 
-#define PENDING -1 // 还未执行答案检查
+// 还未执行答案检查
+#define PENDING -1
+// 答案正确
 #define ACCEPTED 0
+// 换行问题
 #define PRESENTATION_ERROR 1
+// 超时
 #define TIME_LIMIT_EXCEEDED 2
+// 超内存限制
 #define MEMORY_LIMIT_EXCEEDED 3
+// 答案错误
 #define WRONG_ANSWER 4
+// 用户的程序运行时发生错误
 #define RUNTIME_ERROR 5
-#define OUTPUT_LIMIT_EXCEEDED 6
-#define COMPILE_ERROR 7
-#define SYSTEM_ERROR 8
+// 编译错误
+#define COMPILE_ERROR 6
+// 判题系统发生错误
+#define SYSTEM_ERROR 7
 
 #define CALLS_MAX 400
-#define MAX_OUTPUT 100000000
 
 struct Result
 {
@@ -25,15 +32,13 @@ struct Result
   int memory_used;
   int signal;
   int exit_code;
+  int error_code;
 };
 
 #define CMD_MAX_LENGTH 20
 
 struct Config
 {
-  int run_mode;
-  int check_mode;
-  int judge_mode;
   char **cmd;
   char *log_file;
   int cpu_time_limit;

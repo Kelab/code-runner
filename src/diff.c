@@ -38,9 +38,6 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
     RETURN(SYSTEM_ERROR);
   }
 
-  if (userout_len >= MAX_OUTPUT)
-    RETURN(OUTPUT_LIMIT_EXCEEDED);
-
   lseek(userout_fd, 0, SEEK_SET);
   lseek(rightout_fd, 0, SEEK_SET);
 
@@ -111,12 +108,11 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
   RETURN(WRONG_ANSWER);
 }
 
-int diff(struct Config *config, int *status)
+void diff(struct Config *config, struct Result *_result)
 {
   int right_fd = open(config->out_file, O_RDONLY, 0644);
   int userout_fd = open(config->user_out_file, O_RDONLY, 0644);
-  check_diff(right_fd, userout_fd, status);
+  check_diff(right_fd, userout_fd, &_result->status);
   close_fd(right_fd);
   close_fd(userout_fd);
-  return 0;
 }
