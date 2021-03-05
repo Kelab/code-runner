@@ -11,13 +11,13 @@
 #include "log.h"
 #include "utils.h"
 
-#define RETURN(rst) \
-  {                 \
-    *status = rst;  \
-    return 0;       \
+#define RETURN(rst)       \
+  {                       \
+    result->status = rst; \
+    return 0;             \
   }
 
-int check_diff(int rightout_fd, int userout_fd, int *status)
+int check_diff(int rightout_fd, int userout_fd, struct Result *result)
 {
   char *userout, *rightout;
   const char *cuser, *cright, *end_user, *end_right;
@@ -108,11 +108,11 @@ int check_diff(int rightout_fd, int userout_fd, int *status)
   RETURN(WRONG_ANSWER);
 }
 
-void diff(struct Config *config, struct Result *_result)
+void diff(struct Config *config, struct Result *result)
 {
   int right_fd = open(config->out_file, O_RDONLY, 0644);
   int userout_fd = open(config->user_out_file, O_RDONLY, 0644);
-  check_diff(right_fd, userout_fd, &_result->status);
+  check_diff(right_fd, userout_fd, result);
   close_fd(right_fd);
   close_fd(userout_fd);
 }

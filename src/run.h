@@ -7,7 +7,7 @@
 #include "log.h"
 #include "utils.h"
 
-int run(struct Config *_config, struct Result *_result);
+int run(struct Config *, struct Result *);
 
 #define RESOURCE_UNLIMITED 0
 

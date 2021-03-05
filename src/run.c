@@ -23,26 +23,26 @@
 /**
  * run the specific process
  */
-void child_process(struct Config *_config)
+void child_process(struct Config *config)
 {
   int input_fd = -1;
   int output_fd = -1;
   int err_fd = -1;
 
-  if (_config->cpu_time_limit != RESOURCE_UNLIMITED)
+  if (config->cpu_time_limit != RESOURCE_UNLIMITED)
   {
     // CPU time limit in seconds.
     log_debug("set cpu_time_limit");
     struct rlimit max_time_rl;
-    max_time_rl.rlim_cur = max_time_rl.rlim_max = (rlim_t)((_config->cpu_time_limit + 1000) / 1000);
+    max_time_rl.rlim_cur = max_time_rl.rlim_max = (rlim_t)((config->cpu_time_limit + 1000) / 1000);
     if (setrlimit(RLIMIT_CPU, &max_time_rl))
       CHILD_ERROR_EXIT("set RLIMIT_CPU failure");
   }
 
   // 注意，设置 memory_limit 会导致有些程序 crash，比如 python, node
-  if (_config->memory_limit != RESOURCE_UNLIMITED)
+  if (config->memory_limit != RESOURCE_UNLIMITED)
   {
-    if (_config->memory_check_only == 0)
+    if (config->memory_check_only == 0)
     {
       // The maximum size of the process's virtual memory (address space) in bytes.
       log_debug("set memory_limit");
@@ -50,7 +50,7 @@ void child_process(struct Config *_config)
       struct rlimit max_memory_rl;
       // 为了避免代码是正确的，但是因为超过内存 oom 而被判定为 re。
       // 如果程序占用低于两倍，最后再重新检查内存占用和配置的关系，就可以判定为超内存而不是 re，如果超过两倍，那就真的 re 了（可能会被 kill）。
-      max_memory_rl.rlim_max = max_memory_rl.rlim_cur = _config->memory_limit * 1024 * 2;
+      max_memory_rl.rlim_max = max_memory_rl.rlim_cur = config->memory_limit * 1024 * 2;
       if (setrlimit(RLIMIT_AS, &max_memory_rl))
         CHILD_ERROR_EXIT("set RLIMIT_AS failure");
     }
@@ -66,7 +66,7 @@ void child_process(struct Config *_config)
   // }
 
   // 重定向 标准输出IO 到相应的文件中
-  input_fd = open(_config->in_file, O_RDONLY | O_CREAT, 0700);
+  input_fd = open(config->in_file, O_RDONLY | O_CREAT, 0700);
   if (input_fd != -1)
   {
     log_debug("open in_file");
@@ -79,7 +79,7 @@ void child_process(struct Config *_config)
   {
     log_error("error open in_file");
   }
-  output_fd = open(_config->user_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
+  output_fd = open(config->user_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
   if (output_fd != -1)
   {
     log_debug("open user_out_file");
@@ -105,10 +105,10 @@ void child_process(struct Config *_config)
     log_error("error open err_fd");
   }
 
-  log_debug("exec %s", _config->cmd[0]);
+  log_debug("exec %s", config->cmd[0]);
   char *envp[] = {NULL};
 
-  execvpe(_config->cmd[0], _config->cmd, envp);
+  execvpe(config->cmd[0], config->cmd, envp);
   CHILD_ERROR_EXIT("exec cmd error");
 }
 
@@ -166,15 +166,15 @@ void *timeout_killer(void *killer_para)
 /**
  * monitor the user process
  */
-void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, struct timeval *start_time, struct timeval *end_time)
+void monitor(pid_t child_pid, struct Config *config, struct Result *result, struct timeval *start_time, struct timeval *end_time)
 {
   // create new thread to monitor process running time
   pthread_t tid = 0;
-  if (_config->real_time_limit != RESOURCE_UNLIMITED)
+  if (config->real_time_limit != RESOURCE_UNLIMITED)
   {
     struct killer_parameter para;
 
-    para.timeout = _config->real_time_limit;
+    para.timeout = config->real_time_limit;
     para.pid = child_pid;
     if (pthread_create(&tid, NULL, timeout_killer, (void *)(&para)) != 0)
     {
@@ -195,18 +195,18 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
       (end_time->tv_sec - start_time->tv_sec),
       (end_time->tv_usec - start_time->tv_usec),
   };
-  _result->real_time_used = tv_to_ms(&real_time_tv);
-  _result->real_time_used_us = tv_to_us(&real_time_tv);
+  result->real_time_used = tv_to_ms(&real_time_tv);
+  result->real_time_used_us = tv_to_us(&real_time_tv);
   const struct timeval cpu_time_tv = {
       ((&ru.ru_utime)->tv_sec + (&ru.ru_stime)->tv_sec),
       ((&ru.ru_utime)->tv_usec + (&ru.ru_stime)->tv_usec),
   };
-  _result->cpu_time_used = tv_to_ms(&cpu_time_tv);
-  _result->cpu_time_used_us = tv_to_us(&cpu_time_tv);
+  result->cpu_time_used = tv_to_ms(&cpu_time_tv);
+  result->cpu_time_used_us = tv_to_us(&cpu_time_tv);
   // 在 linux, ru_maxrss 单位是 kb
-  _result->memory_used = ru.ru_maxrss;
+  result->memory_used = ru.ru_maxrss;
   // process exited, we may need to cancel timeout killer thread
-  if (_config->real_time_limit != RESOURCE_UNLIMITED)
+  if (config->real_time_limit != RESOURCE_UNLIMITED)
   {
     if (pthread_cancel(tid) != 0)
     {
@@ -218,60 +218,60 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   {
     // TODO: fix SIGUSR1
     // 此时可通过 WTERMSIG(status) 获取使得进程退出的信号编号
-    _result->signal = WTERMSIG(status);
-    log_debug("child process exit abnormal, signal: %d", _result->signal);
-    log_info("strsignal: %s", strsignal(_result->signal));
-    switch (_result->signal)
+    result->signal = WTERMSIG(status);
+    log_debug("child process exit abnormal, signal: %d", result->signal);
+    log_info("strsignal: %s", strsignal(result->signal));
+    switch (result->signal)
     {
     case SIGUSR1:
-      _result->status = SYSTEM_ERROR;
+      result->status = SYSTEM_ERROR;
       break;
     case SIGSEGV:
-      if (_result->memory_used > _config->memory_limit)
-        _result->status = MEMORY_LIMIT_EXCEEDED;
+      if (result->memory_used > config->memory_limit)
+        result->status = MEMORY_LIMIT_EXCEEDED;
       else
-        _result->status = RUNTIME_ERROR;
+        result->status = RUNTIME_ERROR;
       break;
     case SIGALRM:
     case SIGXCPU:
-      _result->status = TIME_LIMIT_EXCEEDED;
+      result->status = TIME_LIMIT_EXCEEDED;
       break;
     case SIGKILL:
     default:
-      if (_config->cpu_time_limit != RESOURCE_UNLIMITED && _result->cpu_time_used > _config->cpu_time_limit)
-        _result->status = TIME_LIMIT_EXCEEDED;
-      else if (_config->real_time_limit != RESOURCE_UNLIMITED && _result->real_time_used > _config->real_time_limit)
-        _result->status = TIME_LIMIT_EXCEEDED;
-      else if (_config->memory_limit != RESOURCE_UNLIMITED && _result->memory_used > _config->memory_limit)
-        _result->status = MEMORY_LIMIT_EXCEEDED;
+      if (config->cpu_time_limit != RESOURCE_UNLIMITED && result->cpu_time_used > config->cpu_time_limit)
+        result->status = TIME_LIMIT_EXCEEDED;
+      else if (config->real_time_limit != RESOURCE_UNLIMITED && result->real_time_used > config->real_time_limit)
+        result->status = TIME_LIMIT_EXCEEDED;
+      else if (config->memory_limit != RESOURCE_UNLIMITED && result->memory_used > config->memory_limit)
+        result->status = MEMORY_LIMIT_EXCEEDED;
       else
-        _result->status = RUNTIME_ERROR;
+        result->status = RUNTIME_ERROR;
       break;
     }
   }
   else
   {
     // 程序正常结束，此时可通过WEXITSTATUS(status)获取进程退出状态(exit时参数)
-    _result->exit_code = WEXITSTATUS(status);
-    log_debug("child process exit_code %d", _result->exit_code);
+    result->exit_code = WEXITSTATUS(status);
+    log_debug("child process exit_code %d", result->exit_code);
 
-    if (_result->exit_code != 0)
+    if (result->exit_code != 0)
     {
-      _result->status = RUNTIME_ERROR;
+      result->status = RUNTIME_ERROR;
     }
     else
     {
-      if (_config->cpu_time_limit != RESOURCE_UNLIMITED && _result->cpu_time_used > _config->cpu_time_limit)
-        _result->status = TIME_LIMIT_EXCEEDED;
-      else if (_config->real_time_limit != RESOURCE_UNLIMITED && _result->real_time_used > _config->real_time_limit)
-        _result->status = TIME_LIMIT_EXCEEDED;
-      else if (_config->memory_limit != RESOURCE_UNLIMITED && _result->memory_used > _config->memory_limit)
-        _result->status = MEMORY_LIMIT_EXCEEDED;
+      if (config->cpu_time_limit != RESOURCE_UNLIMITED && result->cpu_time_used > config->cpu_time_limit)
+        result->status = TIME_LIMIT_EXCEEDED;
+      else if (config->real_time_limit != RESOURCE_UNLIMITED && result->real_time_used > config->real_time_limit)
+        result->status = TIME_LIMIT_EXCEEDED;
+      else if (config->memory_limit != RESOURCE_UNLIMITED && result->memory_used > config->memory_limit)
+        result->status = MEMORY_LIMIT_EXCEEDED;
     }
   }
 }
 
-int run(struct Config *_config, struct Result *_result)
+int run(struct Config *config, struct Result *result)
 {
   struct timeval start_time, end_time;
   gettimeofday(&start_time, NULL);
@@ -287,11 +287,11 @@ int run(struct Config *_config, struct Result *_result)
   }
   else if (child_pid == 0)
   {
-    child_process(_config);
+    child_process(config);
   }
   else
   {
-    monitor(child_pid, _config, _result, &start_time, &end_time);
+    monitor(child_pid, config, result, &start_time, &end_time);
   }
   return 0;
 }

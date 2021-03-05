@@ -12,13 +12,13 @@
 
 char result_message[1000];
 
-void init_result(struct Result *_result)
+void init_result(struct Result *result)
 {
-  _result->status = PENDING;
-  _result->cpu_time_used = _result->cpu_time_used_us = 0;
-  _result->real_time_used = _result->real_time_used_us = 0;
-  _result->memory_used = 0;
-  _result->signal = _result->exit_code = 0;
+  result->status = PENDING;
+  result->cpu_time_used = result->cpu_time_used_us = 0;
+  result->real_time_used = result->real_time_used_us = 0;
+  result->memory_used = 0;
+  result->signal = result->exit_code = 0;
 }
 
 void init_config(struct Config *config)
@@ -66,9 +66,9 @@ void log_config(struct Config *config)
   log_debug("config: log_file %s", config->log_file);
 }
 
-void print_result(struct Result *_result)
+void print_result(struct Result *result)
 {
-  format_result(result_message, _result);
+  format_result(result_message, result);
   printf("%s\n", result_message);
   log_info(result_message);
 }
