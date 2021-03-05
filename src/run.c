@@ -1,4 +1,4 @@
-
+#define _POSIX_SOURCE
 #define _GNU_SOURCE
 
 #include <unistd.h>
@@ -13,6 +13,8 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <pthread.h>
+#include <signal.h>
 
 #include "constants.h"
 #include "run.h"
@@ -125,11 +127,61 @@ void log_rusage(struct rusage *ru)
   log_debug("rusage: involuntary context switches %ld", ru->ru_nivcsw);
 }
 
+struct killer_parameter
+{
+  pid_t pid;
+  int timeout;
+};
+
+int kill_pid(pid_t pid)
+{
+  return kill(pid, SIGKILL);
+}
+
+void *timeout_killer(void *killer_para)
+{
+  // this is a new thread, kill the process if timeout
+  pid_t pid = ((struct killer_parameter *)killer_para)->pid;
+  int timeout = ((struct killer_parameter *)killer_para)->timeout;
+  // On success, pthread_detach() returns 0; on error, it returns an error number.
+  if (pthread_detach(pthread_self()) != 0)
+  {
+    kill_pid(pid);
+    return NULL;
+  }
+  // this may sleep longer that expected, but we will have a check at the end
+  if (sleep((unsigned int)((timeout + 500) / 1000)) != 0)
+  {
+    log_debug("timeout");
+    kill_pid(pid);
+    return NULL;
+  }
+  if (kill_pid(pid) != 0)
+  {
+    return NULL;
+  }
+  return NULL;
+}
+
 /**
  * monitor the user process
  */
 void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, struct timeval *start_time, struct timeval *end_time)
 {
+  // create new thread to monitor process running time
+  pthread_t tid = 0;
+  if (_config->real_time_limit != RESOURCE_UNLIMITED)
+  {
+    struct killer_parameter para;
+
+    para.timeout = _config->real_time_limit;
+    para.pid = child_pid;
+    if (pthread_create(&tid, NULL, timeout_killer, (void *)(&para)) != 0)
+    {
+      kill_pid(child_pid);
+      INTERNAL_ERROR_EXIT("pthread create error");
+    }
+  }
   // 获取子进程的退出状态
   int status;
   struct rusage ru;
@@ -153,14 +205,21 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
   _result->cpu_time_used_us = tv_to_us(&cpu_time_tv);
   // 在 linux, ru_maxrss 单位是 kb
   _result->memory_used = ru.ru_maxrss;
-
+  // process exited, we may need to cancel timeout killer thread
+  if (_config->real_time_limit != RESOURCE_UNLIMITED)
+  {
+    if (pthread_cancel(tid) != 0)
+    {
+      // todo logging
+    };
+  }
   // 若此值为非0 表明进程被信号终止，说明子进程非正常结束
   if (WIFSIGNALED(status) != 0)
   {
     // TODO: fix SIGUSR1
     // 此时可通过 WTERMSIG(status) 获取使得进程退出的信号编号
     _result->signal = WTERMSIG(status);
-    log_debug("child process exit abnormal");
+    log_debug("child process exit abnormal, signal: %d", _result->signal);
     log_info("strsignal: %s", strsignal(_result->signal));
     switch (_result->signal)
     {
@@ -177,12 +236,14 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
     case SIGXCPU:
       _result->status = TIME_LIMIT_EXCEEDED;
       break;
+    case SIGKILL:
     default:
-      // 可能是超过资源限制之后的被 SIGKILL 杀掉
-      if (_result->memory_used > _config->memory_limit)
-        _result->status = MEMORY_LIMIT_EXCEEDED;
-      else if (_result->cpu_time_used > _config->cpu_time_limit)
+      if (_config->cpu_time_limit != RESOURCE_UNLIMITED && _result->cpu_time_used > _config->cpu_time_limit)
         _result->status = TIME_LIMIT_EXCEEDED;
+      else if (_config->real_time_limit != RESOURCE_UNLIMITED && _result->real_time_used > _config->real_time_limit)
+        _result->status = TIME_LIMIT_EXCEEDED;
+      else if (_config->memory_limit != RESOURCE_UNLIMITED && _result->memory_used > _config->memory_limit)
+        _result->status = MEMORY_LIMIT_EXCEEDED;
       else
         _result->status = RUNTIME_ERROR;
       break;
@@ -200,14 +261,12 @@ void monitor(pid_t child_pid, struct Config *_config, struct Result *_result, st
     }
     else
     {
-      if (_result->cpu_time_used > _config->cpu_time_limit)
-      {
+      if (_config->cpu_time_limit != RESOURCE_UNLIMITED && _result->cpu_time_used > _config->cpu_time_limit)
         _result->status = TIME_LIMIT_EXCEEDED;
-      }
-      else if (_result->memory_used > _config->memory_limit)
-      {
+      else if (_config->real_time_limit != RESOURCE_UNLIMITED && _result->real_time_used > _config->real_time_limit)
+        _result->status = TIME_LIMIT_EXCEEDED;
+      else if (_config->memory_limit != RESOURCE_UNLIMITED && _result->memory_used > _config->memory_limit)
         _result->status = MEMORY_LIMIT_EXCEEDED;
-      }
     }
   }
 }

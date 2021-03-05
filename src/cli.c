@@ -28,7 +28,6 @@ static char doc[] =
 \nThat's all.";
 
 /* Keys for options without short-options. */
-#define OPT_REAL_TIME_LIMIT 2
 #define OPT_MEMORY_CHECK_ONLY 3
 
 #define OPT_CPU_TIME_LIMIT 't'
@@ -37,6 +36,7 @@ static char doc[] =
 #define OPT_SYSTEM_OUTPUT 'o'
 #define OPT_USER_OUTPUT 'u'
 #define OPT_LOG_FILE 'l'
+#define OPT_REAL_TIME_LIMIT 'r'
 
 static struct argp_option options[] = {
     {"cpu_time_limit", OPT_CPU_TIME_LIMIT, "MS", 0, "cpu_time limit (default 0) ms, when 0, not check", 1},
@@ -46,7 +46,7 @@ static struct argp_option options[] = {
     {"user_output", OPT_USER_OUTPUT, "FILE", 0, "user out -> file path", 2},
 
     {0, 0, 0, 0, "Optional options:"},
-    {"real_time_limit", OPT_REAL_TIME_LIMIT, "MS", 0, "real_time_limit (default 5000) ms"},
+    {"real_time_limit", OPT_REAL_TIME_LIMIT, "MS", 0, "real_time_limit (default 0) ms"},
     {"memory_check_only", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ARG_OPTIONAL, "not set memory limit in run, (default not check)"},
     {"mco", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ALIAS},
     {"log_file", OPT_LOG_FILE, "FILE", 0, "log file path, (default not output)"},

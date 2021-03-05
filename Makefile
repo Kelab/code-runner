@@ -6,7 +6,7 @@ IDIR=./src
 MKDIRS += out
 MKDIRS += shared
 
-CFLAGS= -Wall -std=gnu17
+CFLAGS= -Wall -std=gnu17 -pthread
 
 ifdef DEBUG
 CFLAGS += -g -DDEBUG
