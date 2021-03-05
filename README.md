@@ -21,6 +21,8 @@
 
 ## 编译
 
+需要安装 `gcc-9`，然后设置 CC 变量：`export CC=gcc-9`。
+
 ```bash
 make judge
 ```
@@ -32,6 +34,11 @@ make libjudge
 ```
 
 会在当前目录编译出一个共享库 `libjudge.so`。
+
+## 开发
+
+你可以使用 VSCode 提供的 VSCode Dev Container 在 Dokcer 容器中开发。
+使用 VSCode 打开本文件夹即能看到提示。
 
 ## 运行
 
