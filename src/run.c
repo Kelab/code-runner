@@ -29,6 +29,9 @@ void child_process(struct Config *config)
   int output_fd = -1;
   int err_fd = -1;
 
+  FILE *re_out = NULL;
+  FILE *re_err = NULL;
+
   if (config->cpu_time_limit != RESOURCE_UNLIMITED)
   {
     // CPU time limit in seconds.
@@ -72,7 +75,7 @@ void child_process(struct Config *config)
     log_debug("open in_file");
     if (dup2(input_fd, fileno(stdin)) == -1)
     {
-      CHILD_ERROR_EXIT("input_fd");
+      CHILD_ERROR_EXIT("input_fd dup error");
     }
   }
   else
@@ -85,12 +88,13 @@ void child_process(struct Config *config)
     log_debug("open user_out_file");
     if (dup2(output_fd, fileno(stdout)) == -1)
     {
-      CHILD_ERROR_EXIT("output_fd");
+      CHILD_ERROR_EXIT("output_fd dup error");
     }
   }
   else
   {
-    log_error("error open user_out_file");
+    log_error("error open user_out_file, redirect to /dev/null");
+    re_out = freopen("/dev/null", "r", stdout);
   }
   err_fd = output_fd;
   if (err_fd != -1)
@@ -102,7 +106,8 @@ void child_process(struct Config *config)
   }
   else
   {
-    log_error("error open err_fd");
+    log_error("error open err_fd, redirect to /dev/null");
+    re_err = freopen("/dev/null", "r", stderr);
   }
 
   log_debug("exec %s", config->cmd[0]);

@@ -73,14 +73,6 @@ void print_result(struct Result *result)
   log_info(result_message);
 }
 
-#define CLOSE_LOGGER_FILE() \
-  {                         \
-    if (log_fp != NULL)     \
-    {                       \
-      fclose(log_fp);       \
-    }                       \
-  }
-
 int main(int argc, char *argv[])
 {
   struct Config config;
@@ -97,12 +89,12 @@ int main(int argc, char *argv[])
   if (result.exit_code || result.signal)
   {
     print_result(&result);
-    CLOSE_LOGGER_FILE();
+    CLOSE_FP(log_fp);
     exit(EXIT_FAILURE);
   }
   if (result.status == PENDING || result.status == ACCEPTED)
     diff(&config, &result);
   print_result(&result);
-  CLOSE_LOGGER_FILE();
+  CLOSE_FP(log_fp);
   return 0;
 }

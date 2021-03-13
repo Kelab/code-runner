@@ -8,14 +8,6 @@
 #include "constants.h"
 #include "utils.h"
 
-void close_fd(int fd)
-{
-  if (fd > 0)
-  {
-    close(fd);
-  }
-}
-
 int equalStr(const char *s, const char *s2)
 {
   while (*s && *s2)

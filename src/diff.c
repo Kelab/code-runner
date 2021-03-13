@@ -113,6 +113,6 @@ void diff(struct Config *config, struct Result *result)
   int right_fd = open(config->out_file, O_RDONLY, 0644);
   int userout_fd = open(config->user_out_file, O_RDONLY, 0644);
   check_diff(right_fd, userout_fd, result);
-  close_fd(right_fd);
-  close_fd(userout_fd);
+  CLOSE_FD(right_fd);
+  CLOSE_FD(userout_fd);
 }

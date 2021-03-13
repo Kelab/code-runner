@@ -14,9 +14,11 @@ int run(struct Config *, struct Result *);
 #define CHILD_ERROR_EXIT(message)                                                           \
   {                                                                                         \
     log_fatal("child process error message: %s, strerror: %s; ", message, strerror(errno)); \
-    close_fd(input_fd);                                                                     \
-    close_fd(output_fd);                                                                    \
-    close_fd(err_fd);                                                                       \
+    CLOSE_FD(input_fd);                                                                     \
+    CLOSE_FD(output_fd);                                                                    \
+    CLOSE_FD(err_fd);                                                                       \
+    CLOSE_FP(re_out);                                                                       \
+    CLOSE_FP(re_err);                                                                       \
     raise(SIGUSR1);                                                                         \
     exit(EXIT_FAILURE);                                                                     \
   }
