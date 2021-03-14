@@ -2,10 +2,7 @@
 
 ## 编译
 
-需要在 GCC 环境下编译使用。
-
-你可以使用 VSCode 提供的 VSCode Dev Container 在 Dokcer 容器中开发。
-使用 VSCode 打开本文件夹即能看到提示。
+需要在 GCC 环境下编译使用（Mac 可以使用 VSCode 提供的 VSCode Dev Container 在容器中开发）。
 
 需要设置 CC 变量，如：`export CC=gcc-9`，不设置则会使用系统默认的编译器。
 
