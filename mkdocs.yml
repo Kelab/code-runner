@@ -1,0 +1,39 @@
+site_name: code-runner
+site_description: 一个运行用户程序的工具，根据判题数据，判定程序运行结果。也可以获取程序运行时间和内存消耗。
+
+repo_name: SWUST-Kelab/code-runner
+repo_url: https://github.com/SWUST-Kelab/code-runner
+
+use_directory_urls: true
+
+theme:
+  name: "material"
+  language: "zh"
+  feature:
+    tabs: true
+  palette:
+    primary: teal
+    accent: deep purple
+
+nav:
+  - 概览: "index.md"
+  - 开始使用: "getting-started.md"
+  - 参数: "opts.md"
+  - FAQ: "faq.md"
+
+markdown_extensions:
+  - admonition
+  - extra
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/SWUST-Kelab
+      name: SWUST-Kelab on GitHub
+
+copyright: Copyright &copy; 2020 - 2021 SWUST-Kelab
