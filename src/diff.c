@@ -110,9 +110,14 @@ int check_diff(int rightout_fd, int userout_fd, struct Result *result)
 
 void diff(struct Config *config, struct Result *result)
 {
-  int right_fd = open(config->out_file, O_RDONLY, 0644);
-  int userout_fd = open(config->user_out_file, O_RDONLY, 0644);
-  check_diff(right_fd, userout_fd, result);
-  CLOSE_FD(right_fd);
-  CLOSE_FD(userout_fd);
+  if (config->out_file && config->stdout_file)
+  {
+    int right_fd = open(config->out_file, O_RDONLY, 0644);
+    int userout_fd = open(config->stdout_file, O_RDONLY, 0644);
+    check_diff(right_fd, userout_fd, result);
+    CLOSE_FD(right_fd);
+    CLOSE_FD(userout_fd);
+  }
+  else
+    log_info("skip diff, out_file or stdout_file not set.");
 }

@@ -28,9 +28,7 @@ void child_process(struct Config *config)
   int input_fd = -1;
   int output_fd = -1;
   int err_fd = -1;
-
-  FILE *re_out = NULL;
-  FILE *re_err = NULL;
+  int null_fd = open("/dev/null", O_WRONLY);
 
   if (config->cpu_time_limit != RESOURCE_UNLIMITED)
   {
@@ -69,51 +67,76 @@ void child_process(struct Config *config)
   // }
 
   // 重定向 标准输出IO 到相应的文件中
-  input_fd = open(config->in_file, O_RDONLY | O_CREAT, 0700);
-  if (input_fd != -1)
+  if (config->in_file)
   {
-    log_debug("open in_file");
-    if (dup2(input_fd, fileno(stdin)) == -1)
+    input_fd = open(config->in_file, O_RDONLY | O_CREAT, 0700);
+    if (input_fd != -1)
     {
-      CHILD_ERROR_EXIT("input_fd dup error");
+      log_debug("open in_file");
+      if (dup2(input_fd, STDIN_FILENO) == -1)
+      {
+        CHILD_ERROR_EXIT("input_fd dup error");
+      }
+    }
+    else
+    {
+      CHILD_ERROR_EXIT("error open in_file");
     }
   }
   else
   {
-    log_error("error open in_file");
+    log_info("in_file is not set");
   }
-  output_fd = open(config->user_out_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
-  if (output_fd != -1)
+
+  if (config->stdout_file)
   {
-    log_debug("open user_out_file");
-    if (dup2(output_fd, fileno(stdout)) == -1)
+    output_fd = open(config->stdout_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
+    if (output_fd != -1)
     {
-      CHILD_ERROR_EXIT("output_fd dup error");
+      log_debug("open stdout_file");
+      if (dup2(output_fd, STDOUT_FILENO) == -1)
+      {
+        CHILD_ERROR_EXIT("output_fd dup error");
+      }
+    }
+    else
+    {
+      CHILD_ERROR_EXIT("error open stdout_file");
     }
   }
   else
   {
-    log_error("error open user_out_file, redirect to /dev/null");
-    re_out = freopen("/dev/null", "r", stdout);
+    log_info("stdout_file is not set, default redirect to /dev/null");
+    dup2(null_fd, STDOUT_FILENO);
   }
-  err_fd = output_fd;
-  if (err_fd != -1)
+
+  if (config->stdout_file)
   {
-    if (dup2(err_fd, fileno(stderr)) == -1)
+    err_fd = output_fd;
+    if (err_fd != -1)
     {
-      CHILD_ERROR_EXIT("err_fd");
+
+      if (dup2(err_fd, STDERR_FILENO) == -1)
+      {
+        CHILD_ERROR_EXIT("err_fd");
+      }
+    }
+    else
+    {
+      CHILD_ERROR_EXIT("error open err_fd");
     }
   }
   else
   {
-    log_error("error open err_fd, redirect to /dev/null");
-    re_err = freopen("/dev/null", "r", stderr);
+    log_info("err_out_file is not set, default redirect to /dev/null");
+    dup2(null_fd, STDERR_FILENO);
   }
 
   log_debug("exec %s", config->cmd[0]);
-  char *envp[] = {NULL};
 
+  char *envp[] = {NULL};
   execvpe(config->cmd[0], config->cmd, envp);
+
   CHILD_ERROR_EXIT("exec cmd error");
 }
 
@@ -123,13 +146,13 @@ void log_rusage(struct rusage *ru)
   log_debug("rusage: user time used tv_usec %ld us", ru->ru_utime.tv_usec);
   log_debug("rusage: system time tv_sec %ld s", ru->ru_stime.tv_sec);
   log_debug("rusage: system time tv_usec %ld us", ru->ru_stime.tv_usec);
-  log_debug("rusage: maximum resident set size %ld kb", ru->ru_maxrss);
-  log_debug("rusage: page reclaims %ld", ru->ru_minflt);
-  log_debug("rusage: page faults %ld", ru->ru_majflt);
-  log_debug("rusage: block input operations %ld", ru->ru_inblock);
-  log_debug("rusage: block output operations %ld", ru->ru_oublock);
-  log_debug("rusage: voluntary context switches %ld", ru->ru_nvcsw);
-  log_debug("rusage: involuntary context switches %ld", ru->ru_nivcsw);
+  // log_debug("rusage: maximum resident set size %ld kb", ru->ru_maxrss);
+  // log_debug("rusage: page reclaims %ld", ru->ru_minflt);
+  // log_debug("rusage: page faults %ld", ru->ru_majflt);
+  // log_debug("rusage: block input operations %ld", ru->ru_inblock);
+  // log_debug("rusage: block output operations %ld", ru->ru_oublock);
+  // log_debug("rusage: voluntary context switches %ld", ru->ru_nvcsw);
+  // log_debug("rusage: involuntary context switches %ld", ru->ru_nivcsw);
 }
 
 struct killer_parameter

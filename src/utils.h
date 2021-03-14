@@ -1,20 +1,16 @@
 #ifndef UTILS_HEADER
 #define UTILS_HEADER
 
-#define CLOSE_FD(fd)   \
-    {                  \
-        if (fd > 0)    \
-        {              \
-            close(fd); \
-        }              \
+#define CLOSE_FD(fd) \
+    if (fd > 0)      \
+    {                \
+        close(fd);   \
     }
 
-#define CLOSE_FP(fp)    \
-    {                   \
-        if (fp != NULL) \
-        {               \
-            fclose(fp); \
-        }               \
+#define CLOSE_FP(fp) \
+    if (fp != NULL)  \
+    {                \
+        fclose(fp);  \
     }
 
 int equalStr(const char *, const char *s2);

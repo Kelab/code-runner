@@ -47,7 +47,8 @@ struct Config
   int memory_check_only;
   char *in_file;
   char *out_file;
-  char *user_out_file;
+  char *stdout_file;
+  char *stderr_file;
 };
 
 #endif

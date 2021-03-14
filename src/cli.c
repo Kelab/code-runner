@@ -72,7 +72,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
     config->out_file = arg;
     break;
   case OPT_USER_OUTPUT:
-    config->user_out_file = arg;
+    config->stdout_file = arg;
     break;
   case OPT_REAL_TIME_LIMIT:
     config->real_time_limit = arg ? atoi(arg) : 5000;

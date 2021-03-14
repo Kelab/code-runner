@@ -25,7 +25,7 @@ void init_config(struct Config *config)
 {
   config->memory_check_only = 0;
   config->cpu_time_limit = config->real_time_limit = config->memory_limit = 0;
-  config->log_file = config->in_file = config->out_file = config->user_out_file = '\0';
+  config->log_file = config->in_file = config->out_file = config->stdout_file = '\0';
 }
 
 FILE *set_logger(struct Config *config)
@@ -62,7 +62,7 @@ void log_config(struct Config *config)
   log_debug("config: memory_check_only %d", config->memory_check_only);
   log_debug("config: in_file %s", config->in_file);
   log_debug("config: out_file %s", config->out_file);
-  log_debug("config: user_out_file %s", config->user_out_file);
+  log_debug("config: stdout_file %s", config->stdout_file);
   log_debug("config: log_file %s", config->log_file);
 }
 
@@ -73,10 +73,20 @@ void print_result(struct Result *result)
   log_info(result_message);
 }
 
+struct fd_store
+{
+  int testdata_in_file;
+  int testdata_out_file;
+  int stdout_file;
+  int stderr_file;
+};
+
 int main(int argc, char *argv[])
 {
   struct Config config;
   struct Result result;
+
+  struct fd_store fs;
 
   init_config(&config);
   parse_argv(argc, argv, &config);
@@ -92,7 +102,7 @@ int main(int argc, char *argv[])
     CLOSE_FP(log_fp);
     exit(EXIT_FAILURE);
   }
-  if (result.status == PENDING || result.status == ACCEPTED)
+  if (result.status <= ACCEPTED)
     diff(&config, &result);
   print_result(&result);
   CLOSE_FP(log_fp);
