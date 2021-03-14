@@ -22,6 +22,10 @@
 
 #define CALLS_MAX 400
 
+// error_code 的错误代码
+// 要运行的命令没有找到
+#define COMMAND_NOT_FOUND 1
+
 struct Result
 {
   int status;
@@ -30,7 +34,7 @@ struct Result
   int real_time_used;
   long real_time_used_us;
   int memory_used;
-  int signal;
+  int signal_code;
   int exit_code;
   int error_code;
 };

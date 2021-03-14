@@ -9,12 +9,13 @@
 ```json
 {
   "status": 0,
-  "cpu_time_used": 0,
-  "cpu_time_used_us": 479,
-  "real_time_used": 2,
-  "real_time_used_us": 1966,
-  "memory_used": 1556,
-  "signal": 0,
+  "cpu_time_used": 2,
+  "cpu_time_used_us": 1870,
+  "real_time_used": 15,
+  "real_time_used_us": 14849,
+  "memory_used": 1516,
+  "error_code": 0,
+  "signal_code": 0,
   "exit_code": 0
 }
 ```

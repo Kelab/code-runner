@@ -47,6 +47,9 @@ That's all.
 
 CPU 时间限制。
 
+`cpu_time` 的意思是用户在程序中用到的 CPU 计算所消耗的时间，不包括 IO 或者挂起时间。
+`real_time` 是用户程序真实运行的时间。
+
 ## -i, --system_input=FILE
 
 要 stdin 给用户程序的文件。

@@ -18,7 +18,8 @@ void init_result(struct Result *result)
   result->cpu_time_used = result->cpu_time_used_us = 0;
   result->real_time_used = result->real_time_used_us = 0;
   result->memory_used = 0;
-  result->signal = result->exit_code = 0;
+  result->signal_code = result->exit_code = 0;
+  result->error_code = 0;
 }
 
 void init_config(struct Config *config)
@@ -89,14 +90,16 @@ int main(int argc, char *argv[])
   struct fd_store fs;
 
   init_config(&config);
+  init_result(&result);
+
   parse_argv(argc, argv, &config);
   FILE *log_fp = set_logger(&config);
   log_config(&config);
-  init_result(&result);
 
   run(&config, &result);
-  // 运行失败的话，直接输出结果。
-  if (result.exit_code || result.signal)
+
+  // 子程序运行失败的话，直接输出结果。
+  if (result.exit_code || result.signal_code)
   {
     print_result(&result);
     CLOSE_FP(log_fp);

@@ -16,129 +16,10 @@
 #include <pthread.h>
 #include <signal.h>
 
+#include "child.h"
 #include "constants.h"
 #include "run.h"
 #include "utils.h"
-
-/**
- * run the specific process
- */
-void child_process(struct Config *config)
-{
-  int input_fd = -1;
-  int output_fd = -1;
-  int err_fd = -1;
-  int null_fd = open("/dev/null", O_WRONLY);
-
-  if (config->cpu_time_limit != RESOURCE_UNLIMITED)
-  {
-    // CPU time limit in seconds.
-    log_debug("set cpu_time_limit");
-    struct rlimit max_time_rl;
-    max_time_rl.rlim_cur = max_time_rl.rlim_max = (rlim_t)((config->cpu_time_limit + 1000) / 1000);
-    if (setrlimit(RLIMIT_CPU, &max_time_rl))
-      CHILD_ERROR_EXIT("set RLIMIT_CPU failure");
-  }
-
-  // 注意，设置 memory_limit 会导致有些程序 crash，比如 python, node
-  if (config->memory_limit != RESOURCE_UNLIMITED)
-  {
-    if (config->memory_check_only == 0)
-    {
-      // The maximum size of the process's virtual memory (address space) in bytes.
-      log_debug("set memory_limit");
-
-      struct rlimit max_memory_rl;
-      // 为了避免代码是正确的，但是因为超过内存 oom 而被判定为 re。
-      // 如果程序占用低于两倍，最后再重新检查内存占用和配置的关系，就可以判定为超内存而不是 re，如果超过两倍，那就真的 re 了（可能会被 kill）。
-      max_memory_rl.rlim_max = max_memory_rl.rlim_cur = config->memory_limit * 1024 * 2;
-      if (setrlimit(RLIMIT_AS, &max_memory_rl))
-        CHILD_ERROR_EXIT("set RLIMIT_AS failure");
-    }
-  }
-
-  // log_debug("set max_output_size");
-  // // set max output size limit
-  // struct rlimit max_output_size;
-  // max_output_size.rlim_cur = max_output_size.rlim_max = MAX_OUTPUT;
-  // if (setrlimit(RLIMIT_FSIZE, &max_output_size) != 0)
-  // {
-  //   CHILD_ERROR_EXIT("set RLIMIT_FSIZE failure");
-  // }
-
-  // 重定向 标准输出IO 到相应的文件中
-  if (config->in_file)
-  {
-    input_fd = open(config->in_file, O_RDONLY | O_CREAT, 0700);
-    if (input_fd != -1)
-    {
-      log_debug("open in_file");
-      if (dup2(input_fd, STDIN_FILENO) == -1)
-      {
-        CHILD_ERROR_EXIT("input_fd dup error");
-      }
-    }
-    else
-    {
-      CHILD_ERROR_EXIT("error open in_file");
-    }
-  }
-  else
-  {
-    log_info("in_file is not set");
-  }
-
-  if (config->stdout_file)
-  {
-    output_fd = open(config->stdout_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
-    if (output_fd != -1)
-    {
-      log_debug("open stdout_file");
-      if (dup2(output_fd, STDOUT_FILENO) == -1)
-      {
-        CHILD_ERROR_EXIT("output_fd dup error");
-      }
-    }
-    else
-    {
-      CHILD_ERROR_EXIT("error open stdout_file");
-    }
-  }
-  else
-  {
-    log_info("stdout_file is not set, default redirect to /dev/null");
-    dup2(null_fd, STDOUT_FILENO);
-  }
-
-  if (config->stdout_file)
-  {
-    err_fd = output_fd;
-    if (err_fd != -1)
-    {
-
-      if (dup2(err_fd, STDERR_FILENO) == -1)
-      {
-        CHILD_ERROR_EXIT("err_fd");
-      }
-    }
-    else
-    {
-      CHILD_ERROR_EXIT("error open err_fd");
-    }
-  }
-  else
-  {
-    log_info("err_out_file is not set, default redirect to /dev/null");
-    dup2(null_fd, STDERR_FILENO);
-  }
-
-  log_debug("exec %s", config->cmd[0]);
-
-  char *envp[] = {NULL};
-  execvpe(config->cmd[0], config->cmd, envp);
-
-  CHILD_ERROR_EXIT("exec cmd error");
-}
 
 void log_rusage(struct rusage *ru)
 {
@@ -241,18 +122,21 @@ void monitor(pid_t child_pid, struct Config *config, struct Result *result, stru
       // todo logging
     };
   }
-  // 若此值为非0 表明进程被信号终止，说明子进程非正常结束
-  if (WIFSIGNALED(status) != 0)
+  if (WIFSIGNALED(status))
   {
     // TODO: fix SIGUSR1
-    // 此时可通过 WTERMSIG(status) 获取使得进程退出的信号编号
-    result->signal = WTERMSIG(status);
-    log_debug("child process exit abnormal, signal: %d", result->signal);
-    log_info("strsignal: %s", strsignal(result->signal));
-    switch (result->signal)
+    // the child process was terminated by a signal.
+    // 此时可通过 WTERMSIG(status) 获取信号编号
+    result->signal_code = WTERMSIG(status);
+    log_debug("child process exit abnormal, signal: %d, strsignal: %s", result->signal_code, strsignal(result->signal_code));
+    switch (result->signal_code)
     {
     case SIGUSR1:
       result->status = SYSTEM_ERROR;
+      break;
+    case SIGUSR2:
+      result->status = SYSTEM_ERROR;
+      result->error_code = COMMAND_NOT_FOUND;
       break;
     case SIGSEGV:
       if (result->memory_used > config->memory_limit)
@@ -279,7 +163,8 @@ void monitor(pid_t child_pid, struct Config *config, struct Result *result, stru
   }
   else
   {
-    // 程序正常结束，此时可通过WEXITSTATUS(status)获取进程退出状态(exit时参数)
+    // 程序正常结束(通过调用 return 或者 exit 结束)
+    // 此时可通过WEXITSTATUS(status)获取进程退出状态(exit时参数)
     result->exit_code = WEXITSTATUS(status);
     log_debug("child process exit_code %d", result->exit_code);
 

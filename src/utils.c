@@ -30,7 +30,8 @@ void format_result(char *message, struct Result *result)
                    "  \"real_time_used\": %d,\n"
                    "  \"real_time_used_us\": %ld,\n"
                    "  \"memory_used\": %d,\n"
-                   "  \"signal\": %d,\n"
+                   "  \"error_code\": %d,\n"
+                   "  \"signal_code\": %d,\n"
                    "  \"exit_code\": %d\n"
                    "}",
           result->status,
@@ -39,7 +40,8 @@ void format_result(char *message, struct Result *result)
           result->real_time_used,
           result->real_time_used_us,
           result->memory_used,
-          result->signal,
+          result->error_code,
+          result->signal_code,
           result->exit_code);
 }
 

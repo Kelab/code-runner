@@ -14,10 +14,10 @@ else
 CFLAGS += -O3
 endif
 
-_DEPS = cli.h constants.h diff.h run.h utils.h log.h
+_DEPS = child.h cli.h constants.h diff.h run.h utils.h log.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = judge.o cli.o diff.o run.o utils.o log.o
+_OBJ = judge.o child.o cli.o diff.o run.o utils.o log.o
 OBJ = $(patsubst %,$(OUT_DIR)/%,$(_OBJ))
 
 $(OUT_DIR)/%.o: $(IDIR)/%.c $(DEPS) | $(OUT_DIR)

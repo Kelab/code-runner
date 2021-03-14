@@ -63,24 +63,30 @@ sudo apt-get -y install build-essential
 
 ## 运行结果
 
-首先要判断 judge 程序是否运行成功，看进程的退出值。
+首先要判断 judge 程序是否运行成功，看 judge 进程的退出值。
+如果 judge 进程都运行出错了，那判题就失败了。
 
-这个退出值是判题程序判题是否成功的标识。
-
-然后以 JSON 形式读取判题程序的标准输出（JSON 格式），看以下两个值：
+第二就是看子程序的运行结果，以 JSON 形式读取判题程序的标准输出（JSON 格式），注意以下值：
 
 ```json
-  "signal": 0,
+  "error_code": 0,
+  "signal_code": 0,
   "exit_code": 0
 ```
 
-`signal` 是导致子程序退出的信号值。
-`exit_code` 是子程序的退出值。
+其实只需要关注的就是 `error_code` 就好，代表 judge 告诉你为什么错了。其他两个值都是为了调试方便展示出来的，
 
-如果都为 0，则说明本次判题执行成功。
-如果有不为 0 的值，可以在判题日志中查看更多信息。
+`signal_code` 是导致子程序异常退出的信号值。
+`exit_code` 是子程序的正常退出值（比如 exit(1））。
 
-status 是判题结果：
+`error_code` 是根据 `signal_code` 和 `exit_code` 总结出来的错误，
+
+比如如果 `error_code` 为 1，就表明没有找到要运行的用户程序。你就可以发现，当 `error_code` 为 1 的时候，`signal_code` 为 12，`exit_code` 为 0。
+
+如果 `error_code` 为 0，大概率就说明本次判题执行成功了，这时候你就可以使用 status 的值当成本次的判题结果。
+如果这几个 `*_code` 有不为 0 的，可以在判题日志中查看更多信息，看看到底是哪里错了。
+
+判题结果 status 的 define 如下：
 
 ```cpp
 // 还未执行答案检查
@@ -103,14 +109,9 @@ status 是判题结果：
 #define SYSTEM_ERROR 7
 ```
 
-注意：如果仅执行了 `run` 模式，并且程序运行没有错误或者超过资源限制的话，输出结果的 `status` 应该为: `-1`。
-
 ### 输出单位
 
 其中 `cpu_time_used` 和 `real_time_used` 单位都是毫秒(ms)。
 `cpu_time_used_us` 和 `real_time_used_us` 单位是微秒(us)。
 
-`cpu_time` 的意思是用户在程序中用到的 CPU 计算所消耗的时间，不包括 IO 或者挂起时间。
-`real_time` 是用户程序真实运行的时间。
-
-`memory_used` 在 linux 下单位是 kb。
+`memory_used` 单位是 kb。
