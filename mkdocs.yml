@@ -13,12 +13,13 @@ theme:
     tabs: true
   palette:
     primary: teal
-    accent: deep purple
 
 nav:
   - 概览: "index.md"
-  - 开始使用: "getting-started.md"
+  - 编译及使用: "how-to-started.md"
   - 参数: "opts.md"
+  - Code 一览: "every-code.md"
+  - 例子: "example.md"
   - FAQ: "faq.md"
 
 markdown_extensions:

@@ -1,10 +1,10 @@
-# 开始使用
+# 编译及使用
 
 ## 编译
 
-需要在 GCC 环境下编译使用（Mac 可以使用 VSCode 提供的 VSCode Dev Container 在容器中开发）。
+需要在 GCC(7 以上) 环境下编译使用。
 
-需要设置 CC 变量，如：`export CC=gcc-9`，不设置则会使用系统默认的编译器。
+可以设置 `CC` 变量以置顶自己的编译器版本，如：`export CC=gcc-9`。
 
 ```bash
 make judge
@@ -18,7 +18,12 @@ make libjudge
 
 会在当前目录编译出一个共享库 `libjudge.so`。
 
+
+### 编译报错
+
 编译报错请检查是否装了 `build-essential`：
+
+在 Ubuntu 下可以安装：
 
 ```sh
 sudo apt-get update
@@ -26,12 +31,6 @@ sudo apt-get -y install build-essential
 ```
 
 ## 运行
-
-下面简单介绍一个例子：
-
-![image](https://user-images.githubusercontent.com/13938334/109407241-1baafa00-79ba-11eb-8f14-51fa0ee23d27.png)
-
-判本仓库根目录下 `tests/node/` 的题。
 
 只需要执行 `./judge [选项...] <命令> [参数...]` 即可，比如：
 
@@ -49,9 +48,11 @@ sudo apt-get -y install build-essential
 - `-o, --system_output` 判题数据的输出，用于比对程序是否运行正确。
 - `-u, --user_output` 将待判程序的标准输出写入该文件。
 
-更多选项可以输入 `./judge -?` 查看帮助。
+最后的 `node ./tests/node/main.js` 就是要执行的命令。
 
-如果执行待判程序的命令的参数中需要使用到 `-`（如想用判题程序执行： `python --version`），那你需要将这个参数放在 `--` 后，如：
+更多选项可以输入 `./judge --help` 查看帮助，或者查看 [选项](./opts.md)。
+
+如果执行待判程序的命令的参数中需要使用到 `-`（如想用 runner 运行： `python --version`），那你需要将这个参数放在 runner 参数里的 `--` 后，如：
 
 ```bash
 ./judge [选项...] <命令> [参数...] -- [放在这里...]
@@ -59,14 +60,21 @@ sudo apt-get -y install build-essential
 ./judge -t 2000 -- python --version
 ```
 
-反正只要是「想传给待判程序的，并且以 `-` 开头的的参数」，就要放在 `--` 后面，只要是放在 `--` 前面任意位置的以 `-` 开头的的参数就会认为是判题程序的参数。
+反正只要是「想传给待判程序的，并且以 `-` 开头的的参数」，就要放在 `--` 后面。
+放在 `--` 前面的话，会被认为是 runner 的参数。
 
-## 运行结果
+## 读取运行结果
 
-首先要判断 judge 程序是否运行成功，看 judge 进程的退出值。
-如果 judge 进程都运行出错了，那判题就失败了。
+读取程序的标准输出，输出的是 JSON 格式的结果，用解析 JSON 的包解析一下就好了。
 
-第二就是看子程序的运行结果，以 JSON 形式读取判题程序的标准输出（JSON 格式），注意以下值：
+### 判断 runner 自身是否运行成功
+
+看 runner 进程的退出值。  
+如果 runner 自身都运行出错了，那这次判题就失败了。
+
+### 解析结果
+
+以下的值是 runner 提供的有关运行待判程序的信息：
 
 ```json
   "error_code": 0,
@@ -74,7 +82,7 @@ sudo apt-get -y install build-essential
   "exit_code": 0
 ```
 
-其实只需要关注的就是 `error_code` 就好，代表 judge 告诉你为什么错了。其他两个值都是为了调试方便展示出来的，
+其实只需要关注的就是 `error_code` 就好，代表 runner 告诉你为什么错了。其他两个值都是为了调试方便展示出来的，
 
 `signal_code` 是导致子程序异常退出的信号值。
 `exit_code` 是子程序的正常退出值（比如 exit(1））。
@@ -86,32 +94,19 @@ sudo apt-get -y install build-essential
 如果 `error_code` 为 0，大概率就说明本次判题执行成功了，这时候你就可以使用 status 的值当成本次的判题结果。
 如果这几个 `*_code` 有不为 0 的，可以在判题日志中查看更多信息，看看到底是哪里错了。
 
-判题结果 status 的 define 如下：
+这些 Code 的相关请看：[Code 一览](/every-code)
 
-```cpp
-// 还未执行答案检查
-#define PENDING -1
-// 答案正确
-#define ACCEPTED 0
-// 换行问题
-#define PRESENTATION_ERROR 1
-// 超时
-#define TIME_LIMIT_EXCEEDED 2
-// 超内存限制
-#define MEMORY_LIMIT_EXCEEDED 3
-// 答案错误
-#define WRONG_ANSWER 4
-// 用户的程序运行时发生错误
-#define RUNTIME_ERROR 5
-// 编译错误
-#define COMPILE_ERROR 6
-// 判题系统发生错误
-#define SYSTEM_ERROR 7
-```
+判题结果 status 含义请看：[Code 一览 - status](/every-code/#staus)
 
-### 输出单位
+## 一些数据的单位
+
+### 时间相关
 
 其中 `cpu_time_used` 和 `real_time_used` 单位都是毫秒(ms)。
 `cpu_time_used_us` 和 `real_time_used_us` 单位是微秒(us)。
 
+### 内存相关
+
 `memory_used` 单位是 kb。
+
+log 中的也有一些数据，一般都把单位带上了再输出的。
