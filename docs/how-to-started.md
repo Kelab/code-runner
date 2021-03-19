@@ -110,3 +110,14 @@ sudo apt-get -y install build-essential
 `memory_used` 单位是 kb。
 
 log 中的也有一些数据，一般都把单位带上了再输出的。
+
+
+## 在其他语言中调用
+
+可以以启动子进程的方式来调用 `judge`，然后捕获控制台的输出即可。  
+
+### Python
+
+### Node.js
+
+### Rust
