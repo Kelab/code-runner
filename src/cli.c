@@ -4,7 +4,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <error.h>
 #include <argp.h>
 
 #include "constants.h"

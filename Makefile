@@ -6,7 +6,7 @@ IDIR=./src
 MKDIRS += out
 MKDIRS += shared
 
-CFLAGS= -Wall -std=gnu17 -pthread
+CFLAGS= -Wall -pthread
 
 ifdef DEBUG
 CFLAGS += -g -DDEBUG
@@ -19,6 +19,11 @@ DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 _OBJ = judge.o child.o cli.o diff.o run.o utils.o log.o
 OBJ = $(patsubst %,$(OUT_DIR)/%,$(_OBJ))
+
+RELEASE := $(shell cat /etc/os-release | grep NAME | awk 'NR==1' | cut -d '=' -f 2 | sed 's/\"//g')
+ifeq ($(RELEASE), Alpine Linux)
+OBJ += /usr/lib/libargp.a
+endif
 
 $(OUT_DIR)/%.o: $(IDIR)/%.c $(DEPS) | $(OUT_DIR)
 	$(CC) $(CFLAGS) -c -o $@ $<

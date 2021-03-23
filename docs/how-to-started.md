@@ -30,6 +30,14 @@ sudo apt-get update
 sudo apt-get -y install build-essential
 ```
 
+### 在 alpine 下编译
+
+```sh
+apk update && apk add --no-cache git gcc musl-dev make argp-standalone
+```
+
+需要注意的是需要安装 `argp-standalone`，然后 make 打包的时候需要添加 `/usr/lib/libargp.a`。
+
 ## 运行
 
 只需要执行 `./judge [选项...] <命令> [参数...]` 即可，比如：

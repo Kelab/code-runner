@@ -1,6 +1,8 @@
 #ifndef UTILS_HEADER
 #define UTILS_HEADER
 
+#include <sys/time.h>
+
 #define CLOSE_FD(fd) \
     if (fd > 0)      \
     {                \
