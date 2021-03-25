@@ -7,16 +7,16 @@
 可以设置 `CC` 变量以置顶自己的编译器版本，如：`export CC=gcc-9`。
 
 ```bash
-make judge
+make runner
 ```
 
-会在当前目录编译出一个可执行文件 `judge`。
+会在当前目录编译出一个可执行文件 `runner`。
 
 ```bash
-make libjudge
+make librunner
 ```
 
-会在当前目录编译出一个共享库 `libjudge.so`。
+会在当前目录编译出一个共享库 `librunner.so`。
 
 
 ### 编译报错
@@ -40,10 +40,10 @@ apk update && apk add --no-cache git gcc musl-dev make argp-standalone
 
 ## 运行
 
-只需要执行 `./judge [选项...] <命令> [参数...]` 即可，比如：
+只需要执行 `./runner [选项...] <命令> [参数...]` 即可，比如：
 
 ```sh
-./judge -l node.log -t 1000 -m 2048 --mco -i ./tests/node/1.in -o ./tests/node/1.out -u node.tmp.out -- node ./tests/node/main.js
+./runner -l node.log -t 1000 -m 2048 --mco -i ./tests/node/1.in -o ./tests/node/1.out -u node.tmp.out -- node ./tests/node/main.js
 ```
 
 各参数意义：
@@ -58,14 +58,14 @@ apk update && apk add --no-cache git gcc musl-dev make argp-standalone
 
 最后的 `node ./tests/node/main.js` 就是要执行的命令。
 
-更多选项可以输入 `./judge --help` 查看帮助，或者查看 [选项](./opts.md)。
+更多选项可以输入 `./runner --help` 查看帮助，或者查看 [选项](./opts.md)。
 
 如果执行待判程序的命令的参数中需要使用到 `-`（如想用 runner 运行： `python --version`），那你需要将这个参数放在 runner 参数里的 `--` 后，如：
 
 ```bash
-./judge [选项...] <命令> [参数...] -- [放在这里...]
+./runner [选项...] <命令> [参数...] -- [放在这里...]
 # 比如
-./judge -t 2000 -- python --version
+./runner -t 2000 -- python --version
 ```
 
 反正只要是「想传给待判程序的，并且以 `-` 开头的的参数」，就要放在 `--` 后面。
@@ -122,7 +122,7 @@ log 中的也有一些数据，一般都把单位带上了再输出的。
 
 ## 在其他语言中调用
 
-可以以启动子进程的方式来调用 `judge`，然后捕获控制台的输出即可。  
+可以以启动子进程的方式来调用 `runner`，然后捕获控制台的输出即可。  
 
 ### Python
 

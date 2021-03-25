@@ -2,12 +2,13 @@
 
 ## 查看帮助
 
-```shell
-$ ./judge --help
-Usage: judge [OPTION...] <command> [args for command]
-judge -- made with hard work and 🧡
+执行 `./runner -?`：
 
-e.g. `judge node main.js -t 1000 --mco` 
+```shell
+Usage: runner [OPTION...] COMMAND [ARG...]
+runner -- made with 🧡
+
+e.g. `runner node main.js -t 1000 --mco` 
 
   -m, --memory_limit=KB      memory limit (default 0) kb, when 0, not check
   -t, --cpu_time_limit=MS    cpu_time limit (default 0) ms, when 0, not check
@@ -29,13 +30,13 @@ Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options.
 
 
-If you want to pass a option(has a leading `-`) to <command> , you need to put
-them after the `--` argument(which prevents anything following being
+If you want to pass a argument(has a leading `-`) to <command> , you need to
+put it after the `--` argument(which prevents anything following being
 interpreted as an option).
   e.g. 
-    - judge -t 1000 --mco python main.py -- -OO 
-    - judge node -t 1000 -- --version 
-    - judge -t 1000 -- node --version 
+    - runner -t 1000 --mco python main.py -- -OO 
+    - runner node -t 1000 -- --version 
+    - runner -t 1000 -- node --version 
 That's all.
 ```
 

@@ -9,21 +9,21 @@
 #include "constants.h"
 #include "utils.h"
 
-const char *argp_program_version = "judge 0.1.0";
+const char *argp_program_version = "runner 0.1.0";
 
-static char args_doc[] = "<command> [args for command]";
+static char args_doc[] = "COMMAND [ARG...]";
 
 static char doc[] =
-    "judge -- made with hard work and 🧡\
+    "runner -- made with 🧡\
 \n\
-\ne.g. `judge node main.js -t 1000 --mco` \
+\ne.g. `runner node main.js -t 1000 --mco` \
 \v\
-\nIf you want to pass a option(has a leading `-`) to <command> , you need to put them after the \
+\nIf you want to pass a argument(has a leading `-`) to <command> , you need to put it after the \
 `--` argument(which prevents anything following being interpreted as an option).\
 \n  e.g. \
-\n    - judge -t 1000 --mco python main.py -- -OO \
-\n    - judge node -t 1000 -- --version \
-\n    - judge -t 1000 -- node --version \
+\n    - runner -t 1000 --mco python main.py -- -OO \
+\n    - runner node -t 1000 -- --version \
+\n    - runner -t 1000 -- node --version \
 \nThat's all.";
 
 /* Keys for options without short-options. */
@@ -97,12 +97,12 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
   return 0;
 }
 
-static struct argp judge_argp = {options, parse_opt, args_doc, doc};
+static struct argp runner_argp = {options, parse_opt, args_doc, doc};
 
 int parse_argv(int argc, char **argv, struct Config *config)
 {
   /* Parse our arguments; every option seen by parse_opt will be
      reflected in arguments. */
-  argp_parse(&judge_argp, argc, argv, 0, 0, config);
+  argp_parse(&runner_argp, argc, argv, 0, 0, config);
   return 0;
 }
