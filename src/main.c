@@ -74,20 +74,10 @@ void print_result(struct Result *result)
   log_info(result_message);
 }
 
-struct fd_store
-{
-  int testdata_in_file;
-  int testdata_out_file;
-  int stdout_file;
-  int stderr_file;
-};
-
 int main(int argc, char *argv[])
 {
   struct Config config;
   struct Result result;
-
-  struct fd_store fs;
 
   init_config(&config);
   init_result(&result);
