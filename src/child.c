@@ -87,6 +87,7 @@ void child_process(struct Config *config)
   else
   {
     log_info("in_file is not set");
+    dup2(null_fd, STDIN_FILENO);
   }
 
   if (config->stdout_file)
