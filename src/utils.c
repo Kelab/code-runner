@@ -6,6 +6,7 @@
 #include <limits.h>
 
 #include "constants.h"
+#include "log.h"
 #include "utils.h"
 
 int equalStr(const char *s, const char *s2)
@@ -53,4 +54,17 @@ long tv_to_ms(const struct timeval *tv)
 long tv_to_us(const struct timeval *tv)
 {
   return (tv->tv_sec * 1000 * 1000) + tv->tv_usec;
+}
+
+int write_file(const char *filename, const char *content)
+{
+  FILE *fptr = fopen(filename, "w");
+  if (fptr == NULL)
+  {
+    log_error("open %s error", filename);
+    return 1;
+  }
+  fprintf(fptr, "%s", content);
+  fclose(fptr);
+  return 0;
 }

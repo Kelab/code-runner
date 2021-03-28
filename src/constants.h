@@ -56,6 +56,7 @@ struct Config
   char *out_file;
   char *stdout_file;
   char *stderr_file;
+  char *save_file;
 };
 
 #endif

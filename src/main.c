@@ -30,26 +30,6 @@ void init_config(struct Config *config)
   config->log_file = config->in_file = config->out_file = config->stdout_file = config->stderr_file = '\0';
 }
 
-FILE *set_logger(struct Config *config)
-{
-  FILE *log_fp = NULL;
-  log_set_quiet(true);
-  if (config->log_file)
-  {
-    log_fp = fopen(config->log_file, "a");
-    if (log_fp == NULL)
-    {
-      fprintf(stderr, "can not open log file\n");
-      fprintf(stderr, "log_file: %s\n", config->log_file);
-    }
-    else
-    {
-      log_add_fp(log_fp, 0);
-    }
-  }
-  return log_fp;
-}
-
 void log_config(struct Config *config)
 {
   int i = 0;
@@ -68,15 +48,24 @@ void log_config(struct Config *config)
   log_debug("config: log_file %s", config->log_file);
 }
 
-void print_result(struct Result *result)
+void show_result(struct Result *result, struct Config *config)
 {
   format_result(result_message, result);
-  printf("%s\n", result_message);
+  if (config->save_file)
+  {
+    write_file(config->save_file, result_message);
+  }
+  else
+  {
+    printf("%s\n", result_message);
+  }
   log_info(result_message);
 }
 
 int main(int argc, char *argv[])
 {
+  log_set_quiet(true);
+
   struct Config config;
   struct Result result;
 
@@ -84,7 +73,16 @@ int main(int argc, char *argv[])
   init_result(&result);
 
   parse_argv(argc, argv, &config);
-  FILE *log_fp = set_logger(&config);
+
+  FILE *log_fp = NULL;
+  if (config.log_file)
+  {
+    log_fp = fopen(config.log_file, "a");
+    if (log_fp != NULL)
+    {
+      log_add_fp(log_fp, LOG_DEBUG);
+    }
+  }
   log_config(&config);
 
   run(&config, &result);
@@ -92,13 +90,13 @@ int main(int argc, char *argv[])
   // 子程序运行失败的话，直接输出结果。
   if (result.exit_code || result.signal_code)
   {
-    print_result(&result);
+    show_result(&result, &config);
     CLOSE_FP(log_fp);
     exit(EXIT_FAILURE);
   }
   if (result.status <= ACCEPTED)
     diff(&config, &result);
-  print_result(&result);
+  show_result(&result, &config);
   CLOSE_FP(log_fp);
   return 0;
 }

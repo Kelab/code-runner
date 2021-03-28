@@ -40,14 +40,16 @@ static char doc[] =
 #define OPT_USER_ERROR 'e'
 #define OPT_LOG_FILE 'l'
 #define OPT_REAL_TIME_LIMIT 'r'
+#define OPT_SAVE_RESULT 's'
 
 static struct argp_option options[] = {
     {"cpu_time_limit", OPT_CPU_TIME_LIMIT, "MS", 0, "cpu_time limit (default 0) ms, when 0, not check", 1},
     {"memory_limit", OPT_MEMORY_LIMIT, "KB", 0, "memory limit (default 0) kb, when 0, not check", 1},
     {"system_input", OPT_SYSTEM_INPUT, "FILE", 0, "system_input path", 2},
     {"system_output", OPT_SYSTEM_OUTPUT, "FILE", 0, "system_output path", 2},
-    {"user_output", OPT_USER_OUTPUT, "FILE", 0, "user outputs -> file path", 2},
-    {"user_err", OPT_USER_ERROR, "FILE", 0, "user error output -> file path", 2},
+    {"user_output", OPT_USER_OUTPUT, "FILE", 0, "user outputs -> file path", 3},
+    {"user_err", OPT_USER_ERROR, "FILE", 0, "user error output -> file path", 3},
+    {"save", OPT_SAVE_RESULT, "FILE", 0, "save result to file", 4},
 
     {0, 0, 0, 0, "Optional options:"},
     {"real_time_limit", OPT_REAL_TIME_LIMIT, "MS", 0, "real_time_limit (default 0) ms"},
@@ -83,6 +85,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
     break;
   case OPT_USER_ERROR:
     config->stderr_file = arg;
+    break;
+  case OPT_SAVE_RESULT:
+    config->save_file = arg;
     break;
   case OPT_REAL_TIME_LIMIT:
     config->real_time_limit = arg ? atoi(arg) : 5000;
