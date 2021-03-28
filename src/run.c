@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/user.h>
 #include <sys/ptrace.h>
 #include <sys/time.h>
 #include <sys/resource.h>

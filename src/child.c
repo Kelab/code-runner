@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/user.h>
 #include <sys/ptrace.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -29,7 +28,7 @@ void child_process(struct Config *config)
   int input_fd = -1;
   int output_fd = -1;
   int err_fd = -1;
-  int null_fd = open("/dev/null", O_WRONLY);
+  int null_fd = open("/dev/null", O_RDWR);
 
   if (config->cpu_time_limit != RESOURCE_UNLIMITED)
   {
@@ -58,15 +57,6 @@ void child_process(struct Config *config)
     }
   }
 
-  // log_debug("set max_output_size");
-  // // set max output size limit
-  // struct rlimit max_output_size;
-  // max_output_size.rlim_cur = max_output_size.rlim_max = MAX_OUTPUT;
-  // if (setrlimit(RLIMIT_FSIZE, &max_output_size) != 0)
-  // {
-  //   CHILD_ERROR_EXIT("set RLIMIT_FSIZE failure");
-  // }
-
   // 重定向 标准输出IO 到相应的文件中
   if (config->in_file)
   {
@@ -87,7 +77,15 @@ void child_process(struct Config *config)
   else
   {
     log_info("in_file is not set");
-    dup2(null_fd, STDIN_FILENO);
+    if (config->std_in == 0)
+    {
+      log_info("redirected stdin to /dev/null");
+      dup2(null_fd, STDIN_FILENO);
+    }
+    else
+    {
+      log_info("use stdin");
+    }
   }
 
   if (config->stdout_file)
@@ -108,13 +106,21 @@ void child_process(struct Config *config)
   }
   else
   {
-    log_info("stdout_file is not set, default redirect to /dev/null");
-    dup2(null_fd, STDOUT_FILENO);
+    log_info("stdout_file is not set");
+    if (config->std_out == 0)
+    {
+      log_info("redirected stdout to /dev/null");
+      dup2(null_fd, STDOUT_FILENO);
+    }
+    else
+    {
+      log_info("use stdout");
+    }
   }
 
-  if (config->stdout_file)
+  if (config->stderr_file)
   {
-    err_fd = output_fd;
+    err_fd = open(config->stderr_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
     if (err_fd != -1)
     {
 
@@ -130,13 +136,19 @@ void child_process(struct Config *config)
   }
   else
   {
-    log_info("err_out_file is not set, default redirect to /dev/null");
-    dup2(null_fd, STDERR_FILENO);
+    log_info("err_file is not set");
+    if (config->std_err == 0)
+    {
+      log_info("redirected stderr to /dev/null");
+      dup2(null_fd, STDERR_FILENO);
+    }
+    else
+    {
+      log_info("use stderr");
+    }
   }
 
   log_debug("exec %s", config->cmd[0]);
-
-  char *envp[] = {NULL};
-  execvpe(config->cmd[0], config->cmd, envp);
+  execvp(config->cmd[0], config->cmd);
   CHILD_ERROR_EXIT("exec cmd error");
 }

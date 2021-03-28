@@ -49,6 +49,9 @@ struct Config
   int real_time_limit;
   int memory_limit;
   int memory_check_only;
+  int std_in;
+  int std_out;
+  int std_err;
   char *in_file;
   char *out_file;
   char *stdout_file;
