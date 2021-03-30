@@ -11,7 +11,7 @@
 
 const char *argp_program_version = "runner 0.1.0";
 
-static char args_doc[] = "COMMAND [ARG...]";
+static char args_doc[] = "COMMAND [ARG...] [-- <COMMAND_FLAG>...]";
 
 static char doc[] =
     "runner -- made with 🧡\
