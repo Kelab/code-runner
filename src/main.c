@@ -27,7 +27,9 @@ void init_config(struct Config *config)
   config->memory_check_only = 0;
   config->cpu_time_limit = config->real_time_limit = config->memory_limit = 0;
   config->std_in = config->std_out = config->std_err = 0;
-  config->log_file = config->in_file = config->out_file = config->stdout_file = config->stderr_file = '\0';
+  config->save_file = '\0';
+  config->in_file = config->out_file = '\0';
+  config->log_file = config->stdout_file = config->stderr_file = '\0';
 }
 
 void log_config(struct Config *config)
