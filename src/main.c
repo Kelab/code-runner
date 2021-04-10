@@ -55,10 +55,12 @@ void show_result(struct Result *result, struct Config *config)
   format_result(result_message, result);
   if (config->save_file)
   {
+    log_debug("save result into file %s", config->save_file);
     write_file(config->save_file, result_message);
   }
   else
   {
+    log_debug("print result_message");
     printf("%s\n", result_message);
   }
   log_info(result_message);
