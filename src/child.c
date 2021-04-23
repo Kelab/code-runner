@@ -57,6 +57,13 @@ void child_process(struct Config *config)
     }
   }
 
+  // 其他安全项
+  // 设置同时能打开的最大文件描述符数为 1000
+  struct rlimit max_nofile_rl;
+  max_nofile_rl.rlim_cur = max_nofile_rl.rlim_max = 1000;
+  if (setrlimit(RLIMIT_NOFILE, &max_nofile_rl))
+    CHILD_ERROR_EXIT("set RLIMIT_NOFILE failure");
+
   // 重定向 标准输出IO 到相应的文件中
   if (config->in_file)
   {
