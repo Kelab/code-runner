@@ -91,15 +91,17 @@ int main(int argc, char *argv[])
 
   run(&config, &result);
 
-  // 子程序运行失败的话，直接输出结果。
+  // 子程序运行失败的话，直接输出结果。不需要进行后面的 diff 了
   if (result.exit_code || result.signal_code)
   {
     show_result(&result, &config);
     CLOSE_FP(log_fp);
-    exit(EXIT_FAILURE);
+    return 0;
   }
   if (result.status <= ACCEPTED)
+  {
     diff(&config, &result);
+  }
   show_result(&result, &config);
   CLOSE_FP(log_fp);
   return 0;
