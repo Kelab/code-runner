@@ -41,10 +41,11 @@ static char doc[] =
 #define OPT_LOG_FILE 'l'
 #define OPT_REAL_TIME_LIMIT 'r'
 #define OPT_SAVE_RESULT 's'
+#define OPT_ATTACH 'a'
 
 static struct argp_option options[] = {
-    {"cpu_time_limit", OPT_CPU_TIME_LIMIT, "MS", 0, "cpu_time limit (default 0) ms, when 0, not check", 1},
-    {"memory_limit", OPT_MEMORY_LIMIT, "KB", 0, "memory limit (default 0) kb, when 0, not check", 1},
+    {"cpu_time_limit", OPT_CPU_TIME_LIMIT, "TIME", 0, "cpu_time limit (default 0) ms, when 0, not check", 1},
+    {"memory_limit", OPT_MEMORY_LIMIT, "SIZE", 0, "memory limit (default 0) kb, when 0, not check", 1},
     {"system_input", OPT_SYSTEM_INPUT, "FILE", 0, "system_input path", 2},
     {"system_output", OPT_SYSTEM_OUTPUT, "FILE", 0, "system_output path", 2},
     {"user_output", OPT_USER_OUTPUT, "FILE", 0, "user outputs -> file path", 3},
@@ -55,63 +56,78 @@ static struct argp_option options[] = {
     {"real_time_limit", OPT_REAL_TIME_LIMIT, "MS", 0, "real_time_limit (default 0) ms"},
     {"memory_check_only", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ARG_OPTIONAL, "not set memory limit in run, (default not check)"},
     {"mco", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ALIAS},
+    {"attach", OPT_ATTACH, "NAME", 0, "Attach to STDIN, STDOUT or STDERR"},
     {"stdin", OPT_ENABLE_STDIN, 0, OPTION_ARG_OPTIONAL, "use stdin"},
     {"stdout", OPT_ENABLE_STDOUT, 0, OPTION_ARG_OPTIONAL, "use stdout"},
     {"stderr", OPT_ENABLE_STDERR, 0, OPTION_ARG_OPTIONAL, "use stderr"},
-    {"log_file", OPT_LOG_FILE, "FILE", 0, "log file path, (default not output)"},
+    {"log_file", OPT_LOG_FILE, "FILE", 0, "log file path, (default ./runner.log)"},
     {0},
 };
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
-  /* input 是之前我们调用 argp_parse 传入的第四个参数 */
-  struct Config *config = state->input;
+  // An arbitrary pointer passed in from the user.
+  struct Config *_config = state->input;
   switch (key)
   {
   case OPT_CPU_TIME_LIMIT:
-    config->cpu_time_limit = arg ? atoi(arg) : 0;
+    _config->cpu_time_limit = arg ? atoi(arg) : 0;
     break;
   case OPT_MEMORY_LIMIT:
-    config->memory_limit = arg ? atoi(arg) : 0;
+    _config->memory_limit = arg ? atoi(arg) : 0;
     break;
   case OPT_SYSTEM_INPUT:
-    config->in_file = arg;
+    _config->in_file = arg;
     break;
   case OPT_SYSTEM_OUTPUT:
-    config->out_file = arg;
+    _config->out_file = arg;
     break;
   case OPT_USER_OUTPUT:
-    config->stdout_file = arg;
+    _config->stdout_file = arg;
     break;
   case OPT_USER_ERROR:
-    config->stderr_file = arg;
+    _config->stderr_file = arg;
     break;
   case OPT_SAVE_RESULT:
-    config->save_file = arg;
+    _config->save_file = arg;
     break;
   case OPT_REAL_TIME_LIMIT:
-    config->real_time_limit = arg ? atoi(arg) : 5000;
+    _config->real_time_limit = arg ? atoi(arg) : 5000;
     break;
   case OPT_MEMORY_CHECK_ONLY:
-    config->memory_check_only = 1;
+    _config->memory_check_only = 1;
     break;
   case OPT_ENABLE_STDIN:
-    config->std_in = 1;
+    _config->std_in = 1;
     break;
   case OPT_ENABLE_STDOUT:
-    config->std_out = 1;
+    _config->std_out = 1;
     break;
   case OPT_ENABLE_STDERR:
-    config->std_err = 1;
+    _config->std_err = 1;
     break;
   case OPT_LOG_FILE:
-    config->log_file = arg;
+    _config->log_file = arg;
+    break;
+  case OPT_ATTACH:
+    if (equalStr(arg, "STDIN"))
+    {
+      _config->std_in = 1;
+    }
+    else if (equalStr(arg, "STDOUT"))
+    {
+      _config->std_out = 1;
+    }
+    else if (equalStr(arg, "STDERR"))
+    {
+      _config->std_err = 1;
+    }
     break;
   case ARGP_KEY_NO_ARGS:
     argp_usage(state);
     break;
   case ARGP_KEY_ARG:
-    config->cmd = &state->argv[state->next - 1];
+    _config->cmd = &state->argv[state->next - 1];
     /* by setting state->next to the end
          of the arguments, we can force argp to stop parsing here and
          return. */

@@ -29,7 +29,8 @@ void init_config(struct Config *config)
   config->std_in = config->std_out = config->std_err = 0;
   config->save_file = '\0';
   config->in_file = config->out_file = '\0';
-  config->log_file = config->stdout_file = config->stderr_file = '\0';
+  config->stdout_file = config->stderr_file = '\0';
+  config->log_file = "runner.log";
 }
 
 void log_config(struct Config *config)
@@ -44,6 +45,7 @@ void log_config(struct Config *config)
   log_debug("config: real_time_limit %d ms", config->real_time_limit);
   log_debug("config: memory_limit %d kb", config->memory_limit);
   log_debug("config: memory_check_only %d", config->memory_check_only);
+  log_debug("config: attach: STDIN %d | STDOUT %d | STDERR %d", config->std_in, config->std_out, config->std_err);
   log_debug("config: in_file %s", config->in_file);
   log_debug("config: out_file %s", config->out_file);
   log_debug("config: stdout_file %s", config->stdout_file);

@@ -67,7 +67,7 @@ int check_diff(int rightout_fd, int userout_fd, struct Result *result)
     RETURN(SYSTEM_ERROR);
   }
 
-  if ((userout_len == rightout_len) && equalStr(userout, rightout) == 0)
+  if ((userout_len == rightout_len) && equalStr(userout, rightout))
   {
     munmap(userout, userout_len);
     munmap(rightout, rightout_len);

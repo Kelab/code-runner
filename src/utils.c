@@ -15,11 +15,11 @@ int equalStr(const char *s, const char *s2)
   {
     if (*s++ != *s2++)
     {
-      return 1;
+      return 0;
     }
   }
 
-  return 0;
+  return 1;
 }
 
 void format_result(char *message, struct Result *result)
