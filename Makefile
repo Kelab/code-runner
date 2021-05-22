@@ -1,12 +1,8 @@
-
 OUT_DIR=./out
-SHARED_OUT_DIR=./shared
-IDIR=./src
-TEST_DIR = ./tmp
-
+SRC_DIR=./src
+TMP_DIR=./tmp
 
 MKDIRS += out
-MKDIRS += shared
 MKDIRS += tmp
 
 CFLAGS= -Wall -pthread
@@ -17,10 +13,10 @@ else
 CFLAGS += -O3
 endif
 
-_DEPS = child.h cli.h constants.h diff.h run.h utils.h log.h
-DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
+_HEADERS = child.h argv.h constants.h diff.h run.h utils.h log.h
+HEADERS = $(patsubst %,$(SRC_DIR)/%,$(_HEADERS))
 
-_OBJ = main.o child.o cli.o diff.o run.o utils.o log.o
+_OBJ = main.o child.o argv.o diff.o run.o utils.o log.o
 OBJ = $(patsubst %,$(OUT_DIR)/%,$(_OBJ))
 
 RELEASE := $(shell cat /etc/os-release | grep NAME | awk 'NR==1' | cut -d '=' -f 2 | sed 's/\"//g')
@@ -28,24 +24,15 @@ ifeq ($(RELEASE), Alpine Linux)
 OBJ += /usr/lib/libargp.a
 endif
 
-$(OUT_DIR)/%.o: $(IDIR)/%.c $(DEPS) | $(OUT_DIR)
+$(OUT_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS) | $(OUT_DIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 runner: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
-S_OBJ = $(patsubst %,$(SHARED_OUT_DIR)/%,$(_OBJ))
-
-$(SHARED_OUT_DIR)/%.o: $(IDIR)/%.c $(DEPS) | $(SHARED_OUT_DIR)
-	$(CC) $(CFLAGS) -c -fPIC -o $@ $<
-
-librunner: $(S_OBJ)
-	$(CC) $(CFLAGS) -shared -o $@.so $^
-
 .PHONY: clean
 clean:
-	rm -f $(OUT_DIR)/*.o $(SHARED_OUT_DIR)/*.o *~ $(IDIR)/*~
-
+	rm -f $(OUT_DIR)/*.o *~ $(SRC_DIR)/*~
 
 C_BASE=./tests/c
 NODE_BASE=./tests/node
@@ -53,15 +40,15 @@ NODE_BASE=./tests/node
 c: $(C_BASE)/main.c
 	$(CC) $< -o main
 
-testc: c runner | $(TEST_DIR)
-	./runner -l $(TEST_DIR)/c.log -t 1000 -m 2048 -i $(C_BASE)/1.in -o $(C_BASE)/1.out -u $(TEST_DIR)/c.tmp.out ./main
+testc: c runner | $(TMP_DIR)
+	./runner -l $(TMP_DIR)/c.log -t 1000 -m 2048 -i $(C_BASE)/1.in -o $(C_BASE)/1.out -u $(TMP_DIR)/c.tmp.out ./main
 
-testnode: runner | $(TEST_DIR)
-	./runner -l $(TEST_DIR)/node.log -t 1000 -m 2048 --mco -i $(NODE_BASE)/1.in -o $(NODE_BASE)/1.out -u $(TEST_DIR)/node.tmp.out -- node $(NODE_BASE)/main.js
+testnode: runner | $(TMP_DIR)
+	./runner -l $(TMP_DIR)/node.log -t 1000 -m 2048 --mco -i $(NODE_BASE)/1.in -o $(NODE_BASE)/1.out -u $(TMP_DIR)/node.tmp.out -- node $(NODE_BASE)/main.js
 
 
 cleantest:
-	rm -f $(TEST_DIR) main
+	rm -f $(TMP_DIR) main
 
 $(sort $(MKDIRS)):
 	mkdir -p $@
