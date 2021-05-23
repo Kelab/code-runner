@@ -7,8 +7,8 @@
 就能看到居多 options 了。。。
 
 ```shell
-  -m, --memory_limit=KB      memory limit (default 0) kb, when 0, not check
-  -t, --cpu_time_limit=MS    cpu_time limit (default 0) ms, when 0, not check
+  -m, --memory_limit=SIZE    memory limit (default 0) kb, when 0, not check
+  -t, --cpu_time_limit=TIME  cpu_time limit (default 0) ms, when 0, not check
   -i, --system_input=FILE    system_input path
   -o, --system_output=FILE   system_output path
   -e, --user_err=FILE        user error output -> file path
@@ -16,7 +16,8 @@
   -s, --save=FILE            save result to file
 
  Optional options:
-  -l, --log_file=FILE        log file path, (default not output)
+  -a, --attach=NAME          Attach to STDIN, STDOUT or STDERR
+  -l, --log_file=FILE        log file path, (default ./runner.log)
       --memory_check_only, --mco   not set memory limit in run, (default not
                              check)
   -r, --real_time_limit=MS   real_time_limit (default 0) ms
