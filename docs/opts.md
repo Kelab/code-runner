@@ -18,12 +18,9 @@
  Optional options:
   -a, --attach=NAME          Attach to STDIN, STDOUT or STDERR
   -l, --log_file=FILE        log file path, (default ./runner.log)
-      --memory_check_only, --mco   not set memory limit in run, (default not
-                             check)
+      --memory_check_only, --mco   not set memory limit in run, (default false)
+                            
   -r, --real_time_limit=MS   real_time_limit (default 0) ms
-      --stderr               use stderr
-      --stdin                use stdin
-      --stdout               use stdout
 
   -?, --help                 Give this help list
       --usage                Give a short usage message
@@ -67,16 +64,20 @@ CPU 时间限制。
 
 ## 一些增强项
 
-### 允许 stdio
+### attach 输入输出流
 
 ```txt
-  --stderr
-  --stdin
-  --stdout
+  -a, --attach=NAME          Attach to STDIN, STDOUT or STDERR
 ```
 
 因为 runner 只会输出自己的执行结果，所以如果不设置输出到文件的情况下，用户输出的数据就会被重定向到 `/dev/null`。
-这个时候你可以使用这三个选项来激活用户程序的标准输入输出。
+这个时候你可以使用这个选项来激活用户程序的标准输入输出。
+
+可以多次使用，比如：
+
+```bash
+-a STDIN -a STDOUT
+```
 
 ### -l, --log_file=FILE
 

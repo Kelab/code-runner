@@ -27,9 +27,6 @@ static char doc[] =
 \nThat's all.";
 
 /* Keys for options without short-options. */
-#define OPT_ENABLE_STDIN 1
-#define OPT_ENABLE_STDOUT 2
-#define OPT_ENABLE_STDERR 3
 #define OPT_MEMORY_CHECK_ONLY 4
 
 #define OPT_CPU_TIME_LIMIT 't'
@@ -57,9 +54,6 @@ static struct argp_option options[] = {
     {"memory_check_only", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ARG_OPTIONAL, "not set memory limit in run, (default false)"},
     {"mco", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ALIAS},
     {"attach", OPT_ATTACH, "NAME", 0, "Attach to STDIN, STDOUT or STDERR"},
-    {"stdin", OPT_ENABLE_STDIN, 0, OPTION_ARG_OPTIONAL, "use stdin"},
-    {"stdout", OPT_ENABLE_STDOUT, 0, OPTION_ARG_OPTIONAL, "use stdout"},
-    {"stderr", OPT_ENABLE_STDERR, 0, OPTION_ARG_OPTIONAL, "use stderr"},
     {"log_file", OPT_LOG_FILE, "FILE", 0, "log file path, (default ./runner.log)"},
     {0},
 };
@@ -94,15 +88,6 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
     break;
   case OPT_MEMORY_CHECK_ONLY:
     runner_config.memory_check_only = 1;
-    break;
-  case OPT_ENABLE_STDIN:
-    runner_config.std_in = 1;
-    break;
-  case OPT_ENABLE_STDOUT:
-    runner_config.std_out = 1;
-    break;
-  case OPT_ENABLE_STDERR:
-    runner_config.std_err = 1;
     break;
   case OPT_LOG_FILE:
     runner_config.log_file = arg;
