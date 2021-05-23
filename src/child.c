@@ -1,4 +1,3 @@
-#define _POSIX_SOURCE
 #define _GNU_SOURCE
 
 #include <unistd.h>
@@ -20,6 +19,13 @@
 #include "run.h"
 #include "utils.h"
 
+struct rlimit _rl;
+#define SET_LIMIT(FIELD, VALUE)                  \
+  log_debug("set %s : %ld", #FIELD, VALUE);      \
+  _rl.rlim_cur = _rl.rlim_max = (rlim_t)(VALUE); \
+  if (setrlimit(FIELD, &_rl))                    \
+    CHILD_ERROR_EXIT("set" #FIELD "failure");
+
 /**
  * run the specific process
  */
@@ -33,11 +39,7 @@ void child_process(struct Config *config)
   if (config->cpu_time_limit != RESOURCE_UNLIMITED)
   {
     // CPU time limit in seconds.
-    log_debug("set cpu_time_limit");
-    struct rlimit max_time_rl;
-    max_time_rl.rlim_cur = max_time_rl.rlim_max = (rlim_t)((config->cpu_time_limit + 1000) / 1000);
-    if (setrlimit(RLIMIT_CPU, &max_time_rl))
-      CHILD_ERROR_EXIT("set RLIMIT_CPU failure");
+    SET_LIMIT(RLIMIT_CPU, (config->cpu_time_limit + 1000) / 1000);
   }
 
   // 注意，设置 memory_limit 会导致有些程序 crash，比如 python, node
@@ -46,23 +48,17 @@ void child_process(struct Config *config)
     if (config->memory_check_only == 0)
     {
       // The maximum size of the process's virtual memory (address space) in bytes.
-      log_debug("set memory_limit");
-
-      struct rlimit max_memory_rl;
       // 为了避免代码是正确的，但是因为超过内存 oom 而被判定为 re。
       // 如果程序占用低于两倍，最后再重新检查内存占用和配置的关系，就可以判定为超内存而不是 re，如果超过两倍，那就真的 re 了（可能会被 kill）。
-      max_memory_rl.rlim_max = max_memory_rl.rlim_cur = config->memory_limit * 1024 * 2;
-      if (setrlimit(RLIMIT_AS, &max_memory_rl))
-        CHILD_ERROR_EXIT("set RLIMIT_AS failure");
+      SET_LIMIT(RLIMIT_AS, config->memory_limit * 1024 * 2);
     }
   }
 
   // 其他安全项
-  // 设置同时能打开的最大文件描述符数为 1000
-  struct rlimit max_nofile_rl;
-  max_nofile_rl.rlim_cur = max_nofile_rl.rlim_max = 1000;
-  if (setrlimit(RLIMIT_NOFILE, &max_nofile_rl))
-    CHILD_ERROR_EXIT("set RLIMIT_NOFILE failure");
+  // 设置同时能打开的最大文件描述符数为
+  SET_LIMIT(RLIMIT_NOFILE, LIMITS_MAX_FD);
+  // 最大输出
+  SET_LIMIT(RLIMIT_FSIZE, LIMITS_MAX_OUTPUT);
 
   // 重定向 标准输出IO 到相应的文件中
   if (config->in_file)

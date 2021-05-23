@@ -41,6 +41,9 @@ struct Result
 
 #define CMD_MAX_LENGTH 20
 
+#define LIMITS_MAX_OUTPUT 100000
+#define LIMITS_MAX_FD 100
+
 struct Config
 {
   char **cmd;

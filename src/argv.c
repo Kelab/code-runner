@@ -54,7 +54,7 @@ static struct argp_option options[] = {
 
     {0, 0, 0, 0, "Optional options:"},
     {"real_time_limit", OPT_REAL_TIME_LIMIT, "MS", 0, "real_time_limit (default 0) ms"},
-    {"memory_check_only", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ARG_OPTIONAL, "not set memory limit in run, (default not check)"},
+    {"memory_check_only", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ARG_OPTIONAL, "not set memory limit in run, (default false)"},
     {"mco", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ALIAS},
     {"attach", OPT_ATTACH, "NAME", 0, "Attach to STDIN, STDOUT or STDERR"},
     {"stdin", OPT_ENABLE_STDIN, 0, OPTION_ARG_OPTIONAL, "use stdin"},
