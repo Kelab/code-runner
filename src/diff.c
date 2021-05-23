@@ -11,6 +11,9 @@
 #include "log.h"
 #include "utils.h"
 
+extern struct Config runner_config;
+extern struct Result runner_result;
+
 #define RETURN(rst)             \
   {                             \
     runner_result.status = rst; \

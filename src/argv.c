@@ -9,6 +9,9 @@
 #include "constants.h"
 #include "utils.h"
 
+extern struct Config runner_config;
+extern struct Result runner_result;
+
 const char *argp_program_version = "runner 0.1.0";
 
 static char args_doc[] = "COMMAND [ARG...] [-- <COMMAND_FLAG>...]";
@@ -27,6 +30,7 @@ static char doc[] =
 \nThat's all.";
 
 /* Keys for options without short-options. */
+#define OPT_SHARE_NET 1
 #define OPT_MEMORY_CHECK_ONLY 4
 
 #define OPT_CPU_TIME_LIMIT 't'
@@ -51,6 +55,7 @@ static struct argp_option options[] = {
 
     {0, 0, 0, 0, "Optional options:"},
     {"real_time_limit", OPT_REAL_TIME_LIMIT, "MS", 0, "real_time_limit (default 0) ms"},
+    {"shart-net", OPT_SHARE_NET, 0, OPTION_ARG_OPTIONAL, "runner will create a new network namespace default, This prevents the program from communicating with the outside world."},
     {"memory_check_only", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ARG_OPTIONAL, "not set memory limit in run, (default false)"},
     {"mco", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ALIAS},
     {"attach", OPT_ATTACH, "NAME", 0, "Attach to STDIN, STDOUT or STDERR"},
@@ -105,6 +110,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
     {
       runner_config.std_err = 1;
     }
+    break;
+  case OPT_SHARE_NET:
+    runner_config.share_net = 1;
     break;
   case ARGP_KEY_NO_ARGS:
     argp_usage(state);

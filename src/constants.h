@@ -1,6 +1,12 @@
 #ifndef CONSTANTS_HEADER
 #define CONSTANTS_HEADER
 
+#include <string.h>
+#include <signal.h>
+
+#include "log.h"
+#include "utils.h"
+
 // 还未执行答案检查
 #define PENDING -1
 // 答案正确
@@ -26,6 +32,13 @@
 // 要运行的命令没有找到
 #define COMMAND_NOT_FOUND 1
 
+// 资源相关
+#define RESOURCE_UNLIMITED 0
+#define CMD_MAX_LENGTH 20
+
+#define LIMITS_MAX_OUTPUT 100000
+#define LIMITS_MAX_FD 100
+
 struct Result
 {
   int status;
@@ -38,13 +51,6 @@ struct Result
   int exit_code;
   int error_code;
 };
-
-struct Result runner_result;
-
-#define CMD_MAX_LENGTH 20
-
-#define LIMITS_MAX_OUTPUT 100000
-#define LIMITS_MAX_FD 100
 
 struct Config
 {
@@ -65,12 +71,25 @@ struct Config
   char *save_file;
 };
 
-struct Config runner_config;
+#define CHILD_ERROR_EXIT(message)                                                               \
+  {                                                                                             \
+    int _errno = errno;                                                                         \
+    log_fatal("child error: %s, errno: %d, strerror: %s; ", message, _errno, strerror(_errno)); \
+    CLOSE_FD(input_fd);                                                                         \
+    CLOSE_FD(output_fd);                                                                        \
+    CLOSE_FD(err_fd);                                                                           \
+    CLOSE_FD(null_fd);                                                                          \
+    if (_errno == 2)                                                                            \
+      raise(SIGUSR2);                                                                           \
+    else                                                                                        \
+      raise(SIGUSR1);                                                                           \
+    exit(_errno);                                                                               \
+  }
 
-#define cf_box_root / var / local / lib / isolate
-#define cg_root / sys / fs / cgroup
-#define first_uid 60000
-#define first_gid 60000
-#define num_boxes 1000
+#define INTERNAL_ERROR_EXIT(message)                                                            \
+  {                                                                                             \
+    log_fatal("Interlnal Error: %s, errno: %d, strerror: %s", message, errno, strerror(errno)); \
+    exit(EXIT_FAILURE);                                                                         \
+  }
 
 #endif

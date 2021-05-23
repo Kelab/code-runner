@@ -13,10 +13,10 @@ else
 CFLAGS += -O3
 endif
 
-_HEADERS = child.h argv.h constants.h diff.h run.h utils.h log.h
+_HEADERS = constants.h sandbox.h argv.h diff.h utils.h log.h
 HEADERS = $(patsubst %,$(SRC_DIR)/%,$(_HEADERS))
 
-_OBJ = main.o child.o argv.o diff.o run.o utils.o log.o
+_OBJ = main.o constants.o sandbox.o argv.o diff.o utils.o log.o
 OBJ = $(patsubst %,$(OUT_DIR)/%,$(_OBJ))
 
 RELEASE := $(shell cat /etc/os-release | grep NAME | awk 'NR==1' | cut -d '=' -f 2 | sed 's/\"//g')
@@ -32,7 +32,8 @@ runner: $(OBJ)
 
 .PHONY: clean
 clean:
-	rm -f $(OUT_DIR)/*.o *~ $(SRC_DIR)/*~
+	rm -f $(OUT_DIR)/*.o *~ $(SRC_DIR)/*~ main
+	rm -rf $(TMP_DIR)
 
 C_BASE=./tests/c
 NODE_BASE=./tests/node
@@ -47,8 +48,6 @@ testnode: runner | $(TMP_DIR)
 	sudo ./runner -l $(TMP_DIR)/node.log -t 1000 -m 2048 --mco -i $(NODE_BASE)/1.in -o $(NODE_BASE)/1.out -u $(TMP_DIR)/node.tmp.out -- node $(NODE_BASE)/main.js
 
 
-cleantest:
-	rm -f $(TMP_DIR) main
 
 $(sort $(MKDIRS)):
 	mkdir -p $@

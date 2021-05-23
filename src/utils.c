@@ -5,6 +5,9 @@
 #include <sys/time.h>
 #include <limits.h>
 
+extern struct Config runner_config;
+extern struct Result runner_result;
+
 #include "constants.h"
 #include "log.h"
 #include "utils.h"
@@ -44,6 +47,25 @@ void format_result(char *message)
           runner_result.error_code,
           runner_result.signal_code,
           runner_result.exit_code);
+}
+
+void log_config()
+{
+  int i = 0;
+  while ((runner_config.cmd)[i])
+  {
+    log_debug("config: cmd part %d: %s", i, (runner_config.cmd)[i]);
+    i++;
+  };
+  log_debug("config: cpu_time_limit %d ms", runner_config.cpu_time_limit);
+  log_debug("config: real_time_limit %d ms", runner_config.real_time_limit);
+  log_debug("config: memory_limit %d kb", runner_config.memory_limit);
+  log_debug("config: memory_check_only %d", runner_config.memory_check_only);
+  log_debug("config: attach: STDIN %d | STDOUT %d | STDERR %d", runner_config.std_in, runner_config.std_out, runner_config.std_err);
+  log_debug("config: in_file %s", runner_config.in_file);
+  log_debug("config: out_file %s", runner_config.out_file);
+  log_debug("config: stdout_file %s", runner_config.stdout_file);
+  log_debug("config: log_file %s", runner_config.log_file);
 }
 
 long tv_to_ms(const struct timeval *tv)

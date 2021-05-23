@@ -1,107 +1,89 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/ptrace.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <pthread.h>
+#include <signal.h>
+#include <sys/utsname.h>
+#include <sched.h>
+#include <stdint.h>
+#include <sys/mman.h>
 
 #include "argv.h"
 #include "constants.h"
-#include "diff.h"
 #include "log.h"
-#include "run.h"
 #include "utils.h"
+#include "sandbox.h"
 
-char result_message[1000];
+extern struct Config runner_config;
+extern struct Result runner_result;
 
-void init_result()
+FILE *log_fp = NULL;
+
+// 100 MB
+#define STACK_SIZE (100 * 1024 * 1024) /* Stack size(bytes) for cloned child */
+
+int run_in_sandbox()
 {
-  runner_result.status = PENDING;
-  runner_result.cpu_time_used = runner_result.cpu_time_used_us = 0;
-  runner_result.real_time_used = runner_result.real_time_used_us = 0;
-  runner_result.memory_used = 0;
-  runner_result.signal_code = runner_result.exit_code = 0;
-  runner_result.error_code = 0;
+  /* Allocate memory to be used for the stack of the child. */
+  char *stack; /* Start of stack buffer */
+
+  // Stacks grow downward on all
+  // processors that run Linux (except the HP PA processors), so stack
+  // usually points to the topmost address of the memory space set up
+  // for the child stack.
+  stack = mmap(NULL, STACK_SIZE, PROT_READ | PROT_WRITE,
+               MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+  if (stack == MAP_FAILED)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, mmap err");
+
+  pid_t proxy_pid = clone(
+      sandbox_proxy,
+      stack + STACK_SIZE,
+      SIGCHLD | CLONE_NEWIPC | (runner_config.share_net ? 0 : CLONE_NEWNET) | CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWUTS,
+      0);
+  if (proxy_pid < 0)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, clone failed");
+  if (!proxy_pid)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, clone returned 0");
+
+  int stat;
+  pid_t p = waitpid(proxy_pid, &stat, 0);
+
+  if (p < 0)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, waitpid() failed");
+  return 0;
 }
 
-void init_config()
+void clean()
 {
-  runner_config.memory_check_only = 0;
-  runner_config.cpu_time_limit = runner_config.real_time_limit = runner_config.memory_limit = 0;
-  runner_config.std_in = runner_config.std_out = runner_config.std_err = 0;
-  runner_config.in_file = runner_config.out_file = '\0';
-  runner_config.save_file = '\0';
-  runner_config.stdout_file = '\0';
-  runner_config.stderr_file = '\0';
-  runner_config.log_file = "runner.log";
-}
-
-void log_config()
-{
-  int i = 0;
-  while ((runner_config.cmd)[i])
-  {
-    log_debug("config: cmd part %d: %s", i, (runner_config.cmd)[i]);
-    i++;
-  };
-  log_debug("config: cpu_time_limit %d ms", runner_config.cpu_time_limit);
-  log_debug("config: real_time_limit %d ms", runner_config.real_time_limit);
-  log_debug("config: memory_limit %d kb", runner_config.memory_limit);
-  log_debug("config: memory_check_only %d", runner_config.memory_check_only);
-  log_debug("config: attach: STDIN %d | STDOUT %d | STDERR %d", runner_config.std_in, runner_config.std_out, runner_config.std_err);
-  log_debug("config: in_file %s", runner_config.in_file);
-  log_debug("config: out_file %s", runner_config.out_file);
-  log_debug("config: stdout_file %s", runner_config.stdout_file);
-  log_debug("config: log_file %s", runner_config.log_file);
-}
-
-void show_result()
-{
-  format_result(result_message);
-  if (runner_config.save_file)
-  {
-    log_debug("save result into file %s", runner_config.save_file);
-    write_file(runner_config.save_file, result_message);
-  }
-  else
-  {
-    log_debug("print result_message");
-    printf("%s\n", result_message);
-  }
-  log_info(result_message);
+  CLOSE_FP(log_fp);
 }
 
 int main(int argc, char *argv[])
 {
   log_set_quiet(true);
-  init_config();
-  init_result();
   parse_argv(argc, argv);
 
-  FILE *log_fp = NULL;
   if (runner_config.log_file)
   {
     log_fp = fopen(runner_config.log_file, "a");
     if (log_fp != NULL)
     {
       log_add_fp(log_fp, LOG_DEBUG);
+      log_config();
     }
   }
-
-  log_config();
-
-  run();
-
-  // 子程序运行失败的话，直接输出结果。不需要进行后面的 diff 了
-  if (runner_result.exit_code || runner_result.signal_code)
-  {
-    show_result();
-    CLOSE_FP(log_fp);
-    return 0;
-  }
-  if (runner_result.status <= ACCEPTED)
-  {
-    diff();
-  }
-  show_result();
-  CLOSE_FP(log_fp);
+  run_in_sandbox();
+  atexit(clean);
   return 0;
 }
