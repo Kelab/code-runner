@@ -55,11 +55,20 @@ struct Config
   int std_in;
   int std_out;
   int std_err;
+  int share_net;
   char *in_file;
   char *out_file;
   char *stdout_file;
   char *stderr_file;
   char *save_file;
 };
+
+struct Config config;
+
+#define cf_box_root / var / local / lib / isolate
+#define cg_root / sys / fs / cgroup
+#define first_uid 60000
+#define first_gid 60000
+#define num_boxes 1000
 
 #endif

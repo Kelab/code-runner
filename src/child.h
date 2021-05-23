@@ -3,6 +3,6 @@
 
 #include "constants.h"
 
-void child_process(struct Config *config);
-
+void child_process();
+int sandbox_proxy(void *arg);
 #endif

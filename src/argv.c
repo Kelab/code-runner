@@ -66,68 +66,66 @@ static struct argp_option options[] = {
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
-  // An arbitrary pointer passed in from the user.
-  struct Config *_config = state->input;
   switch (key)
   {
   case OPT_CPU_TIME_LIMIT:
-    _config->cpu_time_limit = arg ? atoi(arg) : 0;
+    config.cpu_time_limit = arg ? atoi(arg) : 0;
     break;
   case OPT_MEMORY_LIMIT:
-    _config->memory_limit = arg ? atoi(arg) : 0;
+    config.memory_limit = arg ? atoi(arg) : 0;
     break;
   case OPT_SYSTEM_INPUT:
-    _config->in_file = arg;
+    config.in_file = arg;
     break;
   case OPT_SYSTEM_OUTPUT:
-    _config->out_file = arg;
+    config.out_file = arg;
     break;
   case OPT_USER_OUTPUT:
-    _config->stdout_file = arg;
+    config.stdout_file = arg;
     break;
   case OPT_USER_ERROR:
-    _config->stderr_file = arg;
+    config.stderr_file = arg;
     break;
   case OPT_SAVE_RESULT:
-    _config->save_file = arg;
+    config.save_file = arg;
     break;
   case OPT_REAL_TIME_LIMIT:
-    _config->real_time_limit = arg ? atoi(arg) : 5000;
+    config.real_time_limit = arg ? atoi(arg) : 5000;
     break;
   case OPT_MEMORY_CHECK_ONLY:
-    _config->memory_check_only = 1;
+    config.memory_check_only = 1;
     break;
   case OPT_ENABLE_STDIN:
-    _config->std_in = 1;
+    config.std_in = 1;
     break;
   case OPT_ENABLE_STDOUT:
-    _config->std_out = 1;
+    config.std_out = 1;
     break;
   case OPT_ENABLE_STDERR:
-    _config->std_err = 1;
+    config.std_err = 1;
     break;
   case OPT_LOG_FILE:
-    _config->log_file = arg;
+    config.log_file = arg;
     break;
   case OPT_ATTACH:
     if (equalStr(arg, "STDIN"))
     {
-      _config->std_in = 1;
+      config.std_in = 1;
     }
     else if (equalStr(arg, "STDOUT"))
     {
-      _config->std_out = 1;
+      config.std_out = 1;
     }
     else if (equalStr(arg, "STDERR"))
     {
-      _config->std_err = 1;
+      config.std_err = 1;
     }
     break;
   case ARGP_KEY_NO_ARGS:
     argp_usage(state);
     break;
   case ARGP_KEY_ARG:
-    _config->cmd = &state->argv[state->next - 1];
+    config.cmd = &state->argv[state->next - 1];
     /* by setting state->next to the end
          of the arguments, we can force argp to stop parsing here and
          return. */
@@ -141,10 +139,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
 
 static struct argp runner_argp = {options, parse_opt, args_doc, doc};
 
-int parse_argv(int argc, char **argv, struct Config *config)
+int parse_argv(int argc, char **argv)
 {
   /* Parse our arguments; every option seen by parse_opt will be
      reflected in arguments. */
-  argp_parse(&runner_argp, argc, argv, 0, 0, config);
+  argp_parse(&runner_argp, argc, argv, 0, 0, 0);
   return 0;
 }

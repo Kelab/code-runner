@@ -3,6 +3,6 @@
 
 #include "constants.h"
 
-void parse_argv(int argc, char *argv[], struct Config *config);
+void parse_argv(int argc, char *argv[]);
 
 #endif

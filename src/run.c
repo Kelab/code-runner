@@ -1,4 +1,3 @@
-#define _POSIX_SOURCE
 #define _GNU_SOURCE
 
 #include <unistd.h>
@@ -14,6 +13,10 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/utsname.h>
+#include <sched.h>
+#include <stdint.h>
+#include <sys/mman.h>
 
 #include "child.h"
 #include "constants.h"
@@ -183,27 +186,33 @@ void monitor(pid_t child_pid, struct Config *config, struct Result *result, stru
   }
 }
 
+#define STACK_SIZE (1024 * 1024) /* Stack size for cloned child */
+
 int run(struct Config *config, struct Result *result)
 {
   struct timeval start_time, end_time;
   gettimeofday(&start_time, NULL);
-  pid_t child_pid = fork();
-  if (child_pid < 0)
-  {
-    // The fork() function shall fail if:
-    //   The system lacked the necessary resources to create another process,
-    //   or the system - imposed limit on the total number of processes under execution system - wide or by a single user{CHILD_MAX} would be exceeded.
-    // The fork() function may fail if:
-    //   Insufficient storage space is available.
-    INTERNAL_ERROR_EXIT("error in fork");
-  }
-  else if (child_pid == 0)
-  {
-    child_process(config);
-  }
-  else
-  {
-    monitor(child_pid, config, result, &start_time, &end_time);
-  }
+  /* Allocate memory to be used for the stack of the child. */
+  char *stack;    /* Start of stack buffer */
+  char *stackTop; /* End of stack buffer */
+
+  stack = mmap(NULL, STACK_SIZE, PROT_READ | PROT_WRITE,
+               MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+  if (stack == MAP_FAILED)
+    INTERNAL_ERROR_EXIT("mmap err");
+
+  stackTop = stack + STACK_SIZE; /* Assume stack grows downward */
+  pid_t proxy_pid = clone(
+      sandbox_proxy, // Function to execute as the body of the new process
+      stackTop,      // Pass our stack, aligned to 16-bytes
+      SIGCHLD | CLONE_NEWIPC | (config->share_net ? 0 : CLONE_NEWNET) | CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWUTS,
+      config); // Pass the arguments
+
+  if (proxy_pid < 0)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, clone failed");
+  if (!proxy_pid)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, clone returned 0");
+
+  monitor(proxy_pid, config, result, &start_time, &end_time);
   return 0;
 }

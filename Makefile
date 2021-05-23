@@ -41,10 +41,10 @@ c: $(C_BASE)/main.c
 	$(CC) $< -o main
 
 testc: c runner | $(TMP_DIR)
-	./runner -l $(TMP_DIR)/c.log -t 1000 -m 2048 -i $(C_BASE)/1.in -o $(C_BASE)/1.out -u $(TMP_DIR)/c.tmp.out ./main
+	sudo ./runner -l $(TMP_DIR)/c.log -t 1000 -m 2048 -i $(C_BASE)/1.in -o $(C_BASE)/1.out -u $(TMP_DIR)/c.tmp.out ./main
 
 testnode: runner | $(TMP_DIR)
-	./runner -l $(TMP_DIR)/node.log -t 1000 -m 2048 --mco -i $(NODE_BASE)/1.in -o $(NODE_BASE)/1.out -u $(TMP_DIR)/node.tmp.out -- node $(NODE_BASE)/main.js
+	sudo ./runner -l $(TMP_DIR)/node.log -t 1000 -m 2048 --mco -i $(NODE_BASE)/1.in -o $(NODE_BASE)/1.out -u $(TMP_DIR)/node.tmp.out -- node $(NODE_BASE)/main.js
 
 
 cleantest:
