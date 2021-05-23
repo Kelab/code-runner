@@ -16,7 +16,7 @@
   }
 
 int equalStr(const char *, const char *);
-void format_result(char *, struct Result *);
+void format_result(char *);
 long tv_to_ms(const struct timeval *tv);
 long tv_to_us(const struct timeval *tv);
 int write_file(const char *, const char *);

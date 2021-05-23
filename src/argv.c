@@ -69,63 +69,63 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
   switch (key)
   {
   case OPT_CPU_TIME_LIMIT:
-    config.cpu_time_limit = arg ? atoi(arg) : 0;
+    runner_config.cpu_time_limit = arg ? atoi(arg) : 0;
     break;
   case OPT_MEMORY_LIMIT:
-    config.memory_limit = arg ? atoi(arg) : 0;
+    runner_config.memory_limit = arg ? atoi(arg) : 0;
     break;
   case OPT_SYSTEM_INPUT:
-    config.in_file = arg;
+    runner_config.in_file = arg;
     break;
   case OPT_SYSTEM_OUTPUT:
-    config.out_file = arg;
+    runner_config.out_file = arg;
     break;
   case OPT_USER_OUTPUT:
-    config.stdout_file = arg;
+    runner_config.stdout_file = arg;
     break;
   case OPT_USER_ERROR:
-    config.stderr_file = arg;
+    runner_config.stderr_file = arg;
     break;
   case OPT_SAVE_RESULT:
-    config.save_file = arg;
+    runner_config.save_file = arg;
     break;
   case OPT_REAL_TIME_LIMIT:
-    config.real_time_limit = arg ? atoi(arg) : 5000;
+    runner_config.real_time_limit = arg ? atoi(arg) : 5000;
     break;
   case OPT_MEMORY_CHECK_ONLY:
-    config.memory_check_only = 1;
+    runner_config.memory_check_only = 1;
     break;
   case OPT_ENABLE_STDIN:
-    config.std_in = 1;
+    runner_config.std_in = 1;
     break;
   case OPT_ENABLE_STDOUT:
-    config.std_out = 1;
+    runner_config.std_out = 1;
     break;
   case OPT_ENABLE_STDERR:
-    config.std_err = 1;
+    runner_config.std_err = 1;
     break;
   case OPT_LOG_FILE:
-    config.log_file = arg;
+    runner_config.log_file = arg;
     break;
   case OPT_ATTACH:
     if (equalStr(arg, "STDIN"))
     {
-      config.std_in = 1;
+      runner_config.std_in = 1;
     }
     else if (equalStr(arg, "STDOUT"))
     {
-      config.std_out = 1;
+      runner_config.std_out = 1;
     }
     else if (equalStr(arg, "STDERR"))
     {
-      config.std_err = 1;
+      runner_config.std_err = 1;
     }
     break;
   case ARGP_KEY_NO_ARGS:
     argp_usage(state);
     break;
   case ARGP_KEY_ARG:
-    config.cmd = &state->argv[state->next - 1];
+    runner_config.cmd = &state->argv[state->next - 1];
     /* by setting state->next to the end
          of the arguments, we can force argp to stop parsing here and
          return. */
@@ -143,6 +143,5 @@ int parse_argv(int argc, char **argv)
 {
   /* Parse our arguments; every option seen by parse_opt will be
      reflected in arguments. */
-  argp_parse(&runner_argp, argc, argv, 0, 0, 0);
-  return 0;
+  return argp_parse(&runner_argp, argc, argv, 0, 0, 0);
 }

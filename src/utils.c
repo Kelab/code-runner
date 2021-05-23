@@ -22,7 +22,7 @@ int equalStr(const char *s, const char *s2)
   return 1;
 }
 
-void format_result(char *message, struct Result *result)
+void format_result(char *message)
 {
   sprintf(message, "{\n"
                    "  \"status\": %d,\n"
@@ -35,15 +35,15 @@ void format_result(char *message, struct Result *result)
                    "  \"signal_code\": %d,\n"
                    "  \"exit_code\": %d\n"
                    "}",
-          result->status,
-          result->cpu_time_used,
-          result->cpu_time_used_us,
-          result->real_time_used,
-          result->real_time_used_us,
-          result->memory_used,
-          result->error_code,
-          result->signal_code,
-          result->exit_code);
+          runner_result.status,
+          runner_result.cpu_time_used,
+          runner_result.cpu_time_used_us,
+          runner_result.real_time_used,
+          runner_result.real_time_used_us,
+          runner_result.memory_used,
+          runner_result.error_code,
+          runner_result.signal_code,
+          runner_result.exit_code);
 }
 
 long tv_to_ms(const struct timeval *tv)

@@ -40,21 +40,21 @@ void child_process()
   int err_fd = -1;
   int null_fd = open("/dev/null", O_RDWR);
 
-  if (config.cpu_time_limit != RESOURCE_UNLIMITED)
+  if (runner_config.cpu_time_limit != RESOURCE_UNLIMITED)
   {
     // CPU time limit in seconds.
-    SET_LIMIT(RLIMIT_CPU, (config.cpu_time_limit + 1000) / 1000);
+    SET_LIMIT(RLIMIT_CPU, (runner_config.cpu_time_limit + 1000) / 1000);
   }
 
   // 注意，设置 memory_limit 会导致有些程序 crash，比如 python, node
-  if (config.memory_limit != RESOURCE_UNLIMITED)
+  if (runner_config.memory_limit != RESOURCE_UNLIMITED)
   {
-    if (config.memory_check_only == 0)
+    if (runner_config.memory_check_only == 0)
     {
       // The maximum size of the process's virtual memory (address space) in bytes.
       // 为了避免代码是正确的，但是因为超过内存 oom 而被判定为 re。
       // 如果程序占用低于两倍，最后再重新检查内存占用和配置的关系，就可以判定为超内存而不是 re，如果超过两倍，那就真的 re 了（可能会被 kill）。
-      SET_LIMIT(RLIMIT_AS, config.memory_limit * 1024 * 2);
+      SET_LIMIT(RLIMIT_AS, runner_config.memory_limit * 1024 * 2);
     }
   }
 
@@ -64,9 +64,9 @@ void child_process()
   // 最大输出
   SET_LIMIT(RLIMIT_FSIZE, LIMITS_MAX_OUTPUT);
   // 重定向 标准输出IO 到相应的文件中
-  if (config.in_file)
+  if (runner_config.in_file)
   {
-    input_fd = open(config.in_file, O_RDONLY | O_CREAT, 0700);
+    input_fd = open(runner_config.in_file, O_RDONLY | O_CREAT, 0700);
     if (input_fd != -1)
     {
       log_debug("open in_file");
@@ -83,7 +83,7 @@ void child_process()
   else
   {
     log_info("in_file is not set");
-    if (config.std_in == 0)
+    if (runner_config.std_in == 0)
     {
       log_info("redirected stdin to /dev/null");
       dup2(null_fd, STDIN_FILENO);
@@ -94,9 +94,9 @@ void child_process()
     }
   }
 
-  if (config.stdout_file)
+  if (runner_config.stdout_file)
   {
-    output_fd = open(config.stdout_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
+    output_fd = open(runner_config.stdout_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
     if (output_fd != -1)
     {
       log_debug("open stdout_file");
@@ -113,7 +113,7 @@ void child_process()
   else
   {
     log_info("stdout_file is not set");
-    if (config.std_out == 0)
+    if (runner_config.std_out == 0)
     {
       log_info("redirected stdout to /dev/null");
       dup2(null_fd, STDOUT_FILENO);
@@ -124,9 +124,9 @@ void child_process()
     }
   }
 
-  if (config.stderr_file)
+  if (runner_config.stderr_file)
   {
-    err_fd = open(config.stderr_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
+    err_fd = open(runner_config.stderr_file, O_WRONLY | O_CREAT | O_TRUNC, 0700);
     if (err_fd != -1)
     {
 
@@ -143,7 +143,7 @@ void child_process()
   else
   {
     log_info("err_file is not set");
-    if (config.std_err == 0)
+    if (runner_config.std_err == 0)
     {
       log_info("redirected stderr to /dev/null");
       dup2(null_fd, STDERR_FILENO);
@@ -154,8 +154,8 @@ void child_process()
     }
   }
 
-  log_debug("exec %s", config.cmd[0]);
-  execvp(config.cmd[0], config.cmd);
+  log_debug("exec %s", runner_config.cmd[0]);
+  execvp(runner_config.cmd[0], runner_config.cmd);
   CHILD_ERROR_EXIT("exec cmd error");
 }
 

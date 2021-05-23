@@ -12,54 +12,54 @@
 
 char result_message[1000];
 
-void init_result(struct Result *result)
+void init_result()
 {
-  result->status = PENDING;
-  result->cpu_time_used = result->cpu_time_used_us = 0;
-  result->real_time_used = result->real_time_used_us = 0;
-  result->memory_used = 0;
-  result->signal_code = result->exit_code = 0;
-  result->error_code = 0;
+  runner_result.status = PENDING;
+  runner_result.cpu_time_used = runner_result.cpu_time_used_us = 0;
+  runner_result.real_time_used = runner_result.real_time_used_us = 0;
+  runner_result.memory_used = 0;
+  runner_result.signal_code = runner_result.exit_code = 0;
+  runner_result.error_code = 0;
 }
 
 void init_config()
 {
-  config.memory_check_only = 0;
-  config.cpu_time_limit = config.real_time_limit = config.memory_limit = 0;
-  config.std_in = config.std_out = config.std_err = 0;
-  config.in_file = config.out_file = '\0';
-  config.save_file = '\0';
-  config.stdout_file = '\0';
-  config.stderr_file = '\0';
-  config.log_file = "runner.log";
+  runner_config.memory_check_only = 0;
+  runner_config.cpu_time_limit = runner_config.real_time_limit = runner_config.memory_limit = 0;
+  runner_config.std_in = runner_config.std_out = runner_config.std_err = 0;
+  runner_config.in_file = runner_config.out_file = '\0';
+  runner_config.save_file = '\0';
+  runner_config.stdout_file = '\0';
+  runner_config.stderr_file = '\0';
+  runner_config.log_file = "runner.log";
 }
 
 void log_config()
 {
   int i = 0;
-  while ((config.cmd)[i])
+  while ((runner_config.cmd)[i])
   {
-    log_debug("config: cmd part %d: %s", i, (config.cmd)[i]);
+    log_debug("config: cmd part %d: %s", i, (runner_config.cmd)[i]);
     i++;
   };
-  log_debug("config: cpu_time_limit %d ms", config.cpu_time_limit);
-  log_debug("config: real_time_limit %d ms", config.real_time_limit);
-  log_debug("config: memory_limit %d kb", config.memory_limit);
-  log_debug("config: memory_check_only %d", config.memory_check_only);
-  log_debug("config: attach: STDIN %d | STDOUT %d | STDERR %d", config.std_in, config.std_out, config.std_err);
-  log_debug("config: in_file %s", config.in_file);
-  log_debug("config: out_file %s", config.out_file);
-  log_debug("config: stdout_file %s", config.stdout_file);
-  log_debug("config: log_file %s", config.log_file);
+  log_debug("config: cpu_time_limit %d ms", runner_config.cpu_time_limit);
+  log_debug("config: real_time_limit %d ms", runner_config.real_time_limit);
+  log_debug("config: memory_limit %d kb", runner_config.memory_limit);
+  log_debug("config: memory_check_only %d", runner_config.memory_check_only);
+  log_debug("config: attach: STDIN %d | STDOUT %d | STDERR %d", runner_config.std_in, runner_config.std_out, runner_config.std_err);
+  log_debug("config: in_file %s", runner_config.in_file);
+  log_debug("config: out_file %s", runner_config.out_file);
+  log_debug("config: stdout_file %s", runner_config.stdout_file);
+  log_debug("config: log_file %s", runner_config.log_file);
 }
 
-void show_result(struct Result *result)
+void show_result()
 {
-  format_result(result_message, result);
-  if (config.save_file)
+  format_result(result_message);
+  if (runner_config.save_file)
   {
-    log_debug("save result into file %s", config.save_file);
-    write_file(config.save_file, result_message);
+    log_debug("save result into file %s", runner_config.save_file);
+    write_file(runner_config.save_file, result_message);
   }
   else
   {
@@ -72,38 +72,36 @@ void show_result(struct Result *result)
 int main(int argc, char *argv[])
 {
   log_set_quiet(true);
-
-  struct Result result;
   init_config();
-  init_result(&result);
-
+  init_result();
   parse_argv(argc, argv);
 
   FILE *log_fp = NULL;
-  if (config.log_file)
+  if (runner_config.log_file)
   {
-    log_fp = fopen(config.log_file, "a");
+    log_fp = fopen(runner_config.log_file, "a");
     if (log_fp != NULL)
     {
       log_add_fp(log_fp, LOG_DEBUG);
     }
   }
-  log_config(&config);
 
-  run(&config, &result);
+  log_config();
+
+  run();
 
   // 子程序运行失败的话，直接输出结果。不需要进行后面的 diff 了
-  if (result.exit_code || result.signal_code)
+  if (runner_result.exit_code || runner_result.signal_code)
   {
-    show_result(&result);
+    show_result();
     CLOSE_FP(log_fp);
     return 0;
   }
-  if (result.status <= ACCEPTED)
+  if (runner_result.status <= ACCEPTED)
   {
-    diff(&config, &result);
+    diff();
   }
-  show_result(&result);
+  show_result();
   CLOSE_FP(log_fp);
   return 0;
 }

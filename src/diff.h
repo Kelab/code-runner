@@ -3,6 +3,6 @@
 
 #include "constants.h"
 
-void diff(struct Config *, struct Result *);
+void diff();
 
 #endif

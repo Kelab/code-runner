@@ -39,6 +39,8 @@ struct Result
   int error_code;
 };
 
+struct Result runner_result;
+
 #define CMD_MAX_LENGTH 20
 
 #define LIMITS_MAX_OUTPUT 100000
@@ -63,7 +65,7 @@ struct Config
   char *save_file;
 };
 
-struct Config config;
+struct Config runner_config;
 
 #define cf_box_root / var / local / lib / isolate
 #define cg_root / sys / fs / cgroup
