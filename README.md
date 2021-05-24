@@ -32,6 +32,7 @@
 
 项目开发过程中参考的项目：
 
+- [ioi/isolate](https://github.com/ioi/isolate)
 - [1510460325/judge-runner](https://github.com/1510460325/judge-runner)
 - [dojiong/Lo-runner](https://github.com/dojiong/Lo-runner/)
 - [QingdaoU/Judger](https://github.com/QingdaoU/Judger)

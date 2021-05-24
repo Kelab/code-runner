@@ -25,6 +25,18 @@
 extern struct Config runner_config;
 extern struct Result runner_result;
 
+static int error_pipes[2];
+static int write_errors_to_fd;
+static int read_errors_from_fd;
+
+static int status_pipes[2];
+
+static pid_t box_pid;
+static pid_t proxy_pid;
+
+// 100 MB
+#define STACK_SIZE (100 * 1024 * 1024) /* Stack size(bytes) for cloned child */
+
 struct rlimit _rl;
 #define SET_LIMIT(FIELD, VALUE)                  \
   log_debug("set %s : %ld", #FIELD, VALUE);      \
@@ -240,6 +252,9 @@ void monitor(pid_t child_pid)
   {
     INTERNAL_ERROR_EXIT("wait4 error");
   }
+  if (write(status_pipes[1], &status, sizeof(status)) != sizeof(status))
+    INTERNAL_ERROR_EXIT("Proxy write to pipe failed");
+
   gettimeofday(&end_time, NULL);
   log_rusage(&ru);
   const struct timeval real_time_tv = {
@@ -349,15 +364,9 @@ void show_result()
 
 int sandbox_proxy(void *_arg)
 {
-  struct utsname uts;
-  char *hostname = "runner";
-  /* Change hostname in UTS namespace of child. */
-  if (sethostname(hostname, strlen(hostname)) == -1)
-    INTERNAL_ERROR_EXIT("sethostname");
-
-  /* Retrieve and display hostname. */
-  if (uname(&uts) == -1)
-    INTERNAL_ERROR_EXIT("uname");
+  write_errors_to_fd = error_pipes[1];
+  close(error_pipes[0]);
+  close(status_pipes[0]);
 
   pid_t inside_pid = fork();
 
@@ -367,9 +376,14 @@ int sandbox_proxy(void *_arg)
   }
   else if (!inside_pid)
   {
+    close(status_pipes[1]);
     child_process();
     _exit(42); // We should never get here
   }
+
+  if (write(status_pipes[1], &inside_pid, sizeof(inside_pid)) != sizeof(inside_pid))
+    INTERNAL_ERROR_EXIT("Proxy write to pipe failed");
+
   monitor(inside_pid);
 
   // 子程序运行失败的话，直接输出结果。不需要进行后面的 diff 了
@@ -385,5 +399,85 @@ int sandbox_proxy(void *_arg)
   }
 
   show_result();
+  return 0;
+}
+static void find_box_pid(void)
+{
+  /*
+   *  The box keeper process wants to poll status of the inside process,
+   *  so it needs to know the box_pid. However, it is not easy to obtain:
+   *  we got the PID from the proxy, but it is local to the PID namespace.
+   *  Instead, we ask /proc to enumerate the children of the proxy.
+   *
+   *  CAVEAT: The timing is tricky. We know that the inside process was
+   *  already started (passing the PID from the proxy to us guarantees it),
+   *  but it might already have exited and be reaped by the proxy. Therefore
+   *  it is correct if we fail to find anything.
+   */
+
+  char namebuf[256];
+  snprintf(namebuf, sizeof(namebuf), "/proc/%d/task/%d/children", (int)proxy_pid, (int)proxy_pid);
+  FILE *f = fopen(namebuf, "r");
+  if (!f)
+    return;
+
+  int child;
+  if (fscanf(f, "%d", &child) != 1)
+  {
+    fclose(f);
+    return;
+  }
+  box_pid = child;
+
+  if (fscanf(f, "%d", &child) == 1)
+    INTERNAL_ERROR_EXIT(sprintf("Error parsing %s: unexpected children found", &namebuf));
+
+  fclose(f);
+}
+
+int run_in_sandbox()
+{
+  /* Allocate memory to be used for the stack of the child. */
+  char *stack; /* Start of stack buffer */
+
+  // Stacks grow downward on all
+  // processors that run Linux (except the HP PA processors), so stack
+  // usually points to the topmost address of the memory space set up
+  // for the child stack.
+  stack = mmap(NULL, STACK_SIZE, PROT_READ | PROT_WRITE,
+               MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+  if (stack == MAP_FAILED)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, mmap err");
+
+  setup_pipe(error_pipes, 1);
+  setup_pipe(status_pipes, 0);
+
+  proxy_pid = clone(
+      sandbox_proxy,
+      stack + STACK_SIZE,
+      SIGCHLD | CLONE_NEWIPC | (runner_config.share_net ? 0 : CLONE_NEWNET) | CLONE_NEWNS | CLONE_NEWPID,
+      0);
+  if (proxy_pid < 0)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, clone failed");
+  if (!proxy_pid)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, clone returned 0");
+
+  pid_t box_pid_inside_ns;
+  int n = read(status_pipes[0], &box_pid_inside_ns, sizeof(box_pid_inside_ns));
+  if (n != sizeof(box_pid_inside_ns))
+    INTERNAL_ERROR_EXIT("Proxy failed before it passed box_pid");
+
+  find_box_pid();
+  log_debug("Started proxy_pid=%d box_pid=%d box_pid_inside_ns=%d\n", (int)proxy_pid, (int)box_pid, (int)box_pid_inside_ns);
+
+  // box_keeper
+  read_errors_from_fd = error_pipes[0];
+  close(error_pipes[1]);
+  close(status_pipes[1]);
+  int stat;
+  pid_t p = waitpid(proxy_pid, &stat, 0);
+
+  if (p < 0)
+    INTERNAL_ERROR_EXIT("Cannot run proxy, waitpid() failed");
   return 0;
 }

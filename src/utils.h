@@ -21,5 +21,6 @@ void log_config();
 long tv_to_ms(const struct timeval *tv);
 long tv_to_us(const struct timeval *tv);
 int write_file(const char *, const char *);
+void setup_pipe(int *fds, int nonblocking);
 
 #endif

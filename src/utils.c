@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <limits.h>
+#include <fcntl.h>
+#include <errno.h>
 
 extern struct Config runner_config;
 extern struct Result runner_result;
@@ -89,4 +91,20 @@ int write_file(const char *filename, const char *content)
   fprintf(fptr, "%s", content);
   fclose(fptr);
   return 0;
+}
+
+void setup_pipe(int *fds, int nonblocking)
+{
+  if (pipe(fds) < 0)
+  {
+    INTERNAL_ERROR_EXIT("pipe");
+  }
+  for (int i = 0; i < 2; i++)
+  {
+    if (fcntl(fds[i], F_SETFD, fcntl(fds[i], F_GETFD) | FD_CLOEXEC) < 0 ||
+        (nonblocking && fcntl(fds[i], F_SETFL, fcntl(fds[i], F_GETFL) | O_NONBLOCK) < 0))
+    {
+      INTERNAL_ERROR_EXIT("fcntl on pipe");
+    }
+  }
 }
