@@ -25,9 +25,9 @@
 extern struct Config runner_config;
 extern struct Result runner_result;
 
-static int error_pipes[2];
-static int write_errors_to_fd;
-static int read_errors_from_fd;
+static int result_pipes[2];
+static int write_result_to_fd;
+static int read_result_from_fd;
 
 static int status_pipes[2];
 
@@ -344,28 +344,23 @@ void monitor(pid_t child_pid)
   log_debug("child process cpu_time_used %d", runner_result.cpu_time_used);
 }
 
-char result_message[1000];
-
-void show_result()
+static int do_write_result_to_fd()
 {
-  format_result(result_message);
-  if (runner_config.save_file)
+  if (write_result_to_fd)
   {
-    log_debug("save result into file %s", runner_config.save_file);
-    write_file(runner_config.save_file, result_message);
+    // We are inside the box, have to use error pipe for error reporting.
+    // We hope that the whole error message fits in PIPE_BUF bytes.
+    char buf[1024];
+    int n = format_result(buf);
+    return write(write_result_to_fd, buf, n);
   }
-  else
-  {
-    log_debug("print result_message");
-    printf("%s\n", result_message);
-  }
-  log_info(result_message);
+  return 0;
 }
 
-int sandbox_proxy(void *_arg)
+static int sandbox_proxy(void *_arg)
 {
-  write_errors_to_fd = error_pipes[1];
-  close(error_pipes[0]);
+  write_result_to_fd = result_pipes[1];
+  close(result_pipes[0]);
   close(status_pipes[0]);
 
   pid_t inside_pid = fork();
@@ -389,8 +384,7 @@ int sandbox_proxy(void *_arg)
   // 子程序运行失败的话，直接输出结果。不需要进行后面的 diff 了
   if (runner_result.exit_code || runner_result.signal_code)
   {
-    show_result();
-    return 0;
+    return do_write_result_to_fd();
   }
 
   if (runner_result.status <= ACCEPTED)
@@ -398,9 +392,9 @@ int sandbox_proxy(void *_arg)
     diff();
   }
 
-  show_result();
-  return 0;
+  return do_write_result_to_fd();
 }
+
 static void find_box_pid(void)
 {
   /*
@@ -430,9 +424,54 @@ static void find_box_pid(void)
   box_pid = child;
 
   if (fscanf(f, "%d", &child) == 1)
-    INTERNAL_ERROR_EXIT(sprintf("Error parsing %s: unexpected children found", &namebuf));
+    INTERNAL_ERROR_EXIT("Error parsing %s: unexpected children found", &namebuf);
 
   fclose(f);
+}
+
+static void
+box_keeper(void)
+{
+  read_result_from_fd = result_pipes[0];
+  close(result_pipes[1]);
+  close(status_pipes[1]);
+
+  struct rusage rus;
+  int stat;
+  pid_t p;
+  p = wait4(proxy_pid, &stat, 0, &rus);
+  if (p < 0)
+  {
+    INTERNAL_ERROR_EXIT("wait4");
+  }
+  if (p != proxy_pid)
+    INTERNAL_ERROR_EXIT("wait4: unknown pid %d exited!", p);
+  proxy_pid = 0;
+
+  // Check error pipe if there is an internal error passed from inside the box
+  char interr[1024];
+  int n = read(read_result_from_fd, interr, sizeof(interr) - 1);
+  if (n > 0)
+  {
+    interr[n] = 0;
+    if (runner_config.save_file)
+    {
+      log_debug("save result into file %s", runner_config.save_file);
+      write_file(runner_config.save_file, interr);
+    }
+    else
+    {
+      log_debug("print result_message");
+      printf("%s\n", interr);
+    }
+    log_debug("result  %s", interr);
+  }
+
+  // Check status pipe if there is an exit status reported by the proxy process
+  n = read(status_pipes[0], &stat, sizeof(stat));
+  if (n != sizeof(stat))
+    INTERNAL_ERROR_EXIT("Did not receive exit status from proxy");
+  log_debug("exit status  %d", stat);
 }
 
 int run_in_sandbox()
@@ -449,7 +488,7 @@ int run_in_sandbox()
   if (stack == MAP_FAILED)
     INTERNAL_ERROR_EXIT("Cannot run proxy, mmap err");
 
-  setup_pipe(error_pipes, 1);
+  setup_pipe(result_pipes, 1);
   setup_pipe(status_pipes, 0);
 
   proxy_pid = clone(
@@ -468,16 +507,7 @@ int run_in_sandbox()
     INTERNAL_ERROR_EXIT("Proxy failed before it passed box_pid");
 
   find_box_pid();
-  log_debug("Started proxy_pid=%d box_pid=%d box_pid_inside_ns=%d\n", (int)proxy_pid, (int)box_pid, (int)box_pid_inside_ns);
-
-  // box_keeper
-  read_errors_from_fd = error_pipes[0];
-  close(error_pipes[1]);
-  close(status_pipes[1]);
-  int stat;
-  pid_t p = waitpid(proxy_pid, &stat, 0);
-
-  if (p < 0)
-    INTERNAL_ERROR_EXIT("Cannot run proxy, waitpid() failed");
+  log_debug("Started proxy_pid=%d box_pid=%d box_pid_inside_ns=%d", (int)proxy_pid, (int)box_pid, (int)box_pid_inside_ns);
+  box_keeper();
   return 0;
 }

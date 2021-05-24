@@ -86,10 +86,11 @@ struct Config
     exit(_errno);                                                                               \
   }
 
-#define INTERNAL_ERROR_EXIT(message)                                                            \
-  {                                                                                             \
-    log_fatal("Interlnal Error: %s, errno: %d, strerror: %s", message, errno, strerror(errno)); \
-    exit(EXIT_FAILURE);                                                                         \
+#define INTERNAL_ERROR_EXIT(message, arg...)                                       \
+  {                                                                                \
+    log_fatal("Interlnal Error: errno: %d, strerror: %s", errno, strerror(errno)); \
+    log_fatal(message, ##arg);                                                     \
+    exit(EXIT_FAILURE);                                                            \
   }
 
 #endif

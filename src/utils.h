@@ -16,7 +16,7 @@
   }
 
 int equalStr(const char *, const char *);
-void format_result(char *);
+int format_result(char *);
 void log_config();
 long tv_to_ms(const struct timeval *tv);
 long tv_to_us(const struct timeval *tv);

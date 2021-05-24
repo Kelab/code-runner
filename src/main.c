@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
       log_config();
     }
   }
+
   run_in_sandbox();
   atexit(clean);
   return 0;

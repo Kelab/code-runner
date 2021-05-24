@@ -27,28 +27,28 @@ int equalStr(const char *s, const char *s2)
   return 1;
 }
 
-void format_result(char *message)
+int format_result(char *message)
 {
-  sprintf(message, "{\n"
-                   "  \"status\": %d,\n"
-                   "  \"cpu_time_used\": %d,\n"
-                   "  \"cpu_time_used_us\": %ld,\n"
-                   "  \"real_time_used\": %d,\n"
-                   "  \"real_time_used_us\": %ld,\n"
-                   "  \"memory_used\": %d,\n"
-                   "  \"error_code\": %d,\n"
-                   "  \"signal_code\": %d,\n"
-                   "  \"exit_code\": %d\n"
-                   "}",
-          runner_result.status,
-          runner_result.cpu_time_used,
-          runner_result.cpu_time_used_us,
-          runner_result.real_time_used,
-          runner_result.real_time_used_us,
-          runner_result.memory_used,
-          runner_result.error_code,
-          runner_result.signal_code,
-          runner_result.exit_code);
+  return sprintf(message, "{\n"
+                          "  \"status\": %d,\n"
+                          "  \"cpu_time_used\": %d,\n"
+                          "  \"cpu_time_used_us\": %ld,\n"
+                          "  \"real_time_used\": %d,\n"
+                          "  \"real_time_used_us\": %ld,\n"
+                          "  \"memory_used\": %d,\n"
+                          "  \"error_code\": %d,\n"
+                          "  \"signal_code\": %d,\n"
+                          "  \"exit_code\": %d\n"
+                          "}",
+                 runner_result.status,
+                 runner_result.cpu_time_used,
+                 runner_result.cpu_time_used_us,
+                 runner_result.real_time_used,
+                 runner_result.real_time_used_us,
+                 runner_result.memory_used,
+                 runner_result.error_code,
+                 runner_result.signal_code,
+                 runner_result.exit_code);
 }
 
 void log_config()
