@@ -77,6 +77,7 @@ void child_process()
   SET_LIMIT(RLIMIT_NOFILE, LIMITS_MAX_FD);
   // 最大输出
   SET_LIMIT(RLIMIT_FSIZE, LIMITS_MAX_OUTPUT);
+
   // 重定向 标准输出IO 到相应的文件中
   if (runner_config.in_file)
   {

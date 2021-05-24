@@ -12,18 +12,10 @@ make runner
 
 会在当前目录编译出一个可执行文件 `runner`。
 
-```bash
-make librunner
-```
 
-会在当前目录编译出一个共享库 `librunner.so`。
+### 在 Ubuntu 下编译
 
-
-### 编译报错
-
-编译报错请检查是否装了 `build-essential`：
-
-在 Ubuntu 下可以安装：
+需要先安装工具链。
 
 ```sh
 sudo apt-get update
@@ -32,11 +24,13 @@ sudo apt-get -y install build-essential
 
 ### 在 alpine 下编译
 
+需要先安装工具链。
+
 ```sh
 apk update && apk add --no-cache git gcc musl-dev make argp-standalone
 ```
 
-需要注意的是需要安装 `argp-standalone`，然后 make 打包的时候需要添加 `/usr/lib/libargp.a`。
+需要注意的是需要安装 `argp-standalone`，然后 make 打包的时候需要添加 `/usr/lib/libargp.a`（配置文件里已经做了这一步）。
 
 ## 运行
 
@@ -46,15 +40,7 @@ apk update && apk add --no-cache git gcc musl-dev make argp-standalone
 ./runner -l node.log -t 1000 -m 2048 --mco -i ./tests/node/1.in -o ./tests/node/1.out -u node.tmp.out -- node ./tests/node/main.js
 ```
 
-各参数意义：
-
-- `-l, --log_file` Log 日志路径
-- `-t, --cpu_time_limit` CPU 时间限制 ，单位是 ms，用于判断是否超过 CPU 时间限制。
-- `-m, --memory_limit` 内存限制，单位是 kb，用于判断是否超过内存限制。
-- `--memory_check_only, --mco` 只进行内存限制的检查（要确认判题结果），而不进行真正的内存限制，因为在执行 Node.js 时，限制内存会导致 `node` 程序无法正常执行，会报段错误。
-- `-i, --system_input` 从该文件读入数据当成待判程序的标准输入，如果不设置，也可以直接向程序使用 pipe 的方式输入数据。
-- `-o, --system_output` 判题数据的输出，用于比对程序是否运行正确。
-- `-u, --user_output` 将待判程序的标准输出写入该文件。
+各参数意义见 [选项](/opts)：
 
 最后的 `node ./tests/node/main.js` 就是要执行的命令。
 
@@ -118,14 +104,3 @@ apk update && apk add --no-cache git gcc musl-dev make argp-standalone
 `memory_used` 单位是 kb。
 
 log 中的也有一些数据，一般都把单位带上了再输出的。
-
-
-## 在其他语言中调用
-
-可以以启动子进程的方式来调用 `runner`，然后捕获控制台的输出即可。  
-
-### Python
-
-### Node.js
-
-### Rust
