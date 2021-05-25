@@ -34,6 +34,7 @@ runner: $(OBJ)
 clean:
 	rm -f $(OUT_DIR)/*.o *~ $(SRC_DIR)/*~ main
 	rm -rf $(TMP_DIR)
+	rm -f *.log runner *.out
 
 C_BASE=./tests/c
 NODE_BASE=./tests/node

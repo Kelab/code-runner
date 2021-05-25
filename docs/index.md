@@ -2,22 +2,26 @@
 
 这个程序是程序设计判题中的一个步骤，也就是运行用户程序(已经编译好的程序)，获取用户运行的结果。
 
-使用了 Linux Namaspace 技术，可以隔离真的网络、PID 等~
+使用了 Linux Namaspace 技术，可以隔离真机网络、PID 等~
+
+PS: 在以后的内容里，统称本程序为 runner。
 
 ## 快速开始
 
 先看几个例子吧。
 
-- `./runner -l echo.log -u echo.out echo 123`  
-  运行 `echo 123` 这个程序，中途生成的日志写到 `echo.log` 这个文件中，运行结果输出到 `echo.out` 这个文件中。 
-  ![运行结果](https://i.loli.net/2021/03/14/tPcryONFHsfJWmi.png)
-  ![日志文件](https://i.loli.net/2021/03/14/8kHslmaZJiywEB2.png)
+注意，需要在 root 权限下执行，因为 runner 需要调用一些系统调用来进行一些隔离设置。
 
-- `./runner -l ls.log -u ls.out -- ls -al`  
-  跟上一句的意思差不多，这次执行的是 `ls -al`。  
-  这次的需要执行的命令带有一个前置 `-`，所以我们要把命令放在 `--` 后，
-  这样 `-` 就不会被认为是 `runner` 的参数了。
-  ![运行结果](https://i.loli.net/2021/03/19/8jBZuodeKMzaEbi.png)
+- `runner -l echo.log -u echo.out echo 123`  
+  运行 `echo 123` 这个命令：  
+  ![运行结果](https://i.loli.net/2021/05/25/T24PwMvjoQg5lk3.png)
+  将输出写入到 echo.out 这个文件，默认日志文件是 runner.log，可以自己随便设置。  
+  ![日志文件](https://i.loli.net/2021/05/25/s9nw5rxmRTWPucA.png)
+
+- `runner -l ls.log -u ls.out -- ls -al`  
+  跟上一句的意思差不多，这次执行的是 `ls -al`。这次的需要执行的命令带有一个前置 `-`，所以我们要把命令放在 `--` 后，
+  这样 `-` 就不会被认为是 `runner` 的参数了。  
+  ![运行结果](https://i.loli.net/2021/05/25/WVbXqIi46Gwvp2R.png)
 
 ## 解释
 
