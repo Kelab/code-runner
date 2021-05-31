@@ -180,7 +180,7 @@ void log_rusage(struct rusage *ru)
   log_debug("rusage: user time used tv_usec %ld us", ru->ru_utime.tv_usec);
   log_debug("rusage: system time tv_sec %ld s", ru->ru_stime.tv_sec);
   log_debug("rusage: system time tv_usec %ld us", ru->ru_stime.tv_usec);
-  // log_debug("rusage: maximum resident set size %ld kb", ru->ru_maxrss);
+  log_debug("rusage: maximum resident set size %ld kb", ru->ru_maxrss);
   // log_debug("rusage: page reclaims %ld", ru->ru_minflt);
   // log_debug("rusage: page faults %ld", ru->ru_majflt);
   // log_debug("rusage: block input operations %ld", ru->ru_inblock);
@@ -399,6 +399,7 @@ static int sandbox_proxy(void *_arg)
 static void find_box_pid(void)
 {
   /*
+   *  暂时还没用到这里的功能，后面需要根据这个 ID 来设置一些子进程的东西。
    *  The box keeper process wants to poll status of the inside process,
    *  so it needs to know the box_pid. However, it is not easy to obtain:
    *  we got the PID from the proxy, but it is local to the PID namespace.
@@ -430,8 +431,7 @@ static void find_box_pid(void)
   fclose(f);
 }
 
-static void
-box_keeper(void)
+static void box_keeper(void)
 {
   read_result_from_fd = result_pipes[0];
   close(result_pipes[1]);
