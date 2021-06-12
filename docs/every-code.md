@@ -14,7 +14,6 @@
 | 6      | COMPILE_ERROR         | 编译错误                   |
 | 7      | SYSTEM_ERROR          | 判题系统发生错误           |
 
-
 ## error_code
 
 可以通过 `error_code` 判断判题哪里出错。
