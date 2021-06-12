@@ -2,21 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/ptrace.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <errno.h>
-#include <pthread.h>
-#include <signal.h>
-#include <sys/utsname.h>
-#include <sched.h>
-#include <stdint.h>
-#include <sys/mman.h>
 
 #include "argv.h"
 #include "constants.h"
@@ -36,18 +22,6 @@ void clean()
 
 int main(int argc, char *argv[])
 {
-  if (geteuid())
-  {
-    fprintf(stderr, "Must be started as root\n");
-    return 1;
-  }
-
-  if (getegid() && setegid(0) < 0)
-  {
-    fprintf(stderr, "Cannot switch to root group\n");
-    return 1;
-  }
-
   log_set_quiet(true);
   parse_argv(argc, argv);
 
@@ -59,6 +33,17 @@ int main(int argc, char *argv[])
       log_add_fp(log_fp, LOG_DEBUG);
       log_config();
     }
+  }
+  if (geteuid())
+  {
+    fprintf(stderr, "Must be started as root\n");
+    return 1;
+  }
+
+  if (getegid() && setegid(0) < 0)
+  {
+    fprintf(stderr, "Cannot switch to root group\n");
+    return 1;
   }
 
   run_in_sandbox();
