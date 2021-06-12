@@ -14,7 +14,7 @@ extern struct Result runner_result;
 #include "log.h"
 #include "utils.h"
 
-int equalStr(const char *s, const char *s2)
+int str_equal(const char *s, const char *s2)
 {
   while (*s && *s2)
   {

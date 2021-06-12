@@ -98,15 +98,15 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
     runner_config.log_file = arg;
     break;
   case OPT_ATTACH:
-    if (equalStr(arg, "STDIN"))
+    if (str_equal(arg, "STDIN"))
     {
       runner_config.std_in = 1;
     }
-    else if (equalStr(arg, "STDOUT"))
+    else if (str_equal(arg, "STDOUT"))
     {
       runner_config.std_out = 1;
     }
-    else if (equalStr(arg, "STDERR"))
+    else if (str_equal(arg, "STDERR"))
     {
       runner_config.std_err = 1;
     }

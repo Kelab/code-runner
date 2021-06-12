@@ -70,7 +70,7 @@ int check_diff(int rightout_fd, int userout_fd)
     RETURN(SYSTEM_ERROR);
   }
 
-  if ((userout_len == rightout_len) && equalStr(userout, rightout))
+  if ((userout_len == rightout_len) && str_equal(userout, rightout))
   {
     munmap(userout, userout_len);
     munmap(rightout, rightout_len);
