@@ -37,7 +37,7 @@
 #define CMD_MAX_LENGTH 20
 
 #define LIMITS_MAX_OUTPUT 128 * 1024 * 1024
-#define LIMITS_MAX_FD 100
+#define LIMITS_MAX_FD 1024
 
 struct Result
 {
