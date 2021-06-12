@@ -26,16 +26,12 @@ extern struct Config runner_config;
 extern struct Result runner_result;
 
 static int result_pipes[2];
-static int write_result_to_fd;
-static int read_result_from_fd;
 
-static int status_pipes[2];
+// 首先会发送沙箱内用户程序的 PID
+static int msg_pipes[2];
 
 static pid_t box_pid;
 static pid_t proxy_pid;
-
-// 100 MB
-#define STACK_SIZE (100 * 1024 * 1024) /* Stack size(bytes) for cloned child */
 
 struct rlimit _rl;
 #define SET_LIMIT(FIELD, VALUE)                  \
@@ -181,12 +177,12 @@ void log_rusage(struct rusage *ru)
   log_debug("rusage: system time tv_sec %ld s", ru->ru_stime.tv_sec);
   log_debug("rusage: system time tv_usec %ld us", ru->ru_stime.tv_usec);
   log_debug("rusage: maximum resident set size %ld kb", ru->ru_maxrss);
-  // log_debug("rusage: page reclaims %ld", ru->ru_minflt);
-  // log_debug("rusage: page faults %ld", ru->ru_majflt);
-  // log_debug("rusage: block input operations %ld", ru->ru_inblock);
-  // log_debug("rusage: block output operations %ld", ru->ru_oublock);
-  // log_debug("rusage: voluntary context switches %ld", ru->ru_nvcsw);
-  // log_debug("rusage: involuntary context switches %ld", ru->ru_nivcsw);
+  log_debug("rusage: page reclaims %ld", ru->ru_minflt);
+  log_debug("rusage: page faults %ld", ru->ru_majflt);
+  log_debug("rusage: block input operations %ld", ru->ru_inblock);
+  log_debug("rusage: block output operations %ld", ru->ru_oublock);
+  log_debug("rusage: voluntary context switches %ld", ru->ru_nvcsw);
+  log_debug("rusage: involuntary context switches %ld", ru->ru_nivcsw);
 }
 
 struct killer_parameter
@@ -253,8 +249,6 @@ void monitor(pid_t child_pid)
   {
     INTERNAL_ERROR_EXIT("wait4 error");
   }
-  if (write(status_pipes[1], &status, sizeof(status)) != sizeof(status))
-    INTERNAL_ERROR_EXIT("Proxy write to pipe failed");
 
   gettimeofday(&end_time, NULL);
   log_rusage(&ru);
@@ -292,7 +286,7 @@ void monitor(pid_t child_pid)
     case SIGUSR1:
       runner_result.status = SYSTEM_ERROR;
       break;
-    case SIGUSR2:
+    case SIGNF:
       runner_result.status = SYSTEM_ERROR;
       runner_result.error_code = COMMAND_NOT_FOUND;
       break;
@@ -347,22 +341,24 @@ void monitor(pid_t child_pid)
 
 static int do_write_result_to_fd()
 {
-  if (write_result_to_fd)
+  if (result_pipes[1])
   {
     // We are inside the box, have to use error pipe for error reporting.
     // We hope that the whole error message fits in PIPE_BUF bytes.
     char buf[1024];
     int n = format_result(buf);
-    return write(write_result_to_fd, buf, n);
+    return write(result_pipes[1], buf, n);
   }
   return 0;
 }
 
+/**
+ * proxy 是 clone 出来的，会作为新命名空间中的 PID 为 1 的进程，来执行用户的程序。
+ */
 static int sandbox_proxy(void *_arg)
 {
-  write_result_to_fd = result_pipes[1];
   close(result_pipes[0]);
-  close(status_pipes[0]);
+  close(msg_pipes[0]);
 
   pid_t inside_pid = fork();
 
@@ -372,12 +368,12 @@ static int sandbox_proxy(void *_arg)
   }
   else if (!inside_pid)
   {
-    close(status_pipes[1]);
+    close(msg_pipes[1]);
     child_process();
     _exit(42); // We should never get here
   }
 
-  if (write(status_pipes[1], &inside_pid, sizeof(inside_pid)) != sizeof(inside_pid))
+  if (write(msg_pipes[1], &inside_pid, sizeof(inside_pid)) != sizeof(inside_pid))
     INTERNAL_ERROR_EXIT("Proxy write to pipe failed");
 
   monitor(inside_pid);
@@ -433,9 +429,8 @@ static void find_box_pid(void)
 
 static void box_keeper(void)
 {
-  read_result_from_fd = result_pipes[0];
   close(result_pipes[1]);
-  close(status_pipes[1]);
+  close(msg_pipes[1]);
 
   struct rusage rus;
   int stat;
@@ -450,32 +445,27 @@ static void box_keeper(void)
   proxy_pid = 0;
 
   // Check error pipe if there is an internal error passed from inside the box
-  char interr[1024];
-  int n = read(read_result_from_fd, interr, sizeof(interr) - 1);
+  char inside_result[1024];
+  int n = read(result_pipes[0], inside_result, sizeof(inside_result) - 1);
   if (n > 0)
   {
-    interr[n] = 0;
+    // 标识最后一个字符为 字符串结束
+    inside_result[n] = '\0';
     if (runner_config.save_file)
     {
       log_debug("save result into file %s", runner_config.save_file);
-      write_file(runner_config.save_file, interr);
+      write_file(runner_config.save_file, inside_result);
     }
     else
     {
       log_debug("print result_message");
-      printf("%s\n", interr);
+      printf("%s\n", inside_result);
     }
-    log_debug("result  %s", interr);
+    log_debug("result  %s", inside_result);
   }
-
-  // Check status pipe if there is an exit status reported by the proxy process
-  n = read(status_pipes[0], &stat, sizeof(stat));
-  if (n != sizeof(stat))
-    INTERNAL_ERROR_EXIT("Did not receive exit status from proxy");
-  log_debug("exit status  %d", stat);
 }
 
-int run_in_sandbox()
+void run_in_sandbox()
 {
   /* Allocate memory to be used for the stack of the child. */
   char *stack; /* Start of stack buffer */
@@ -490,7 +480,7 @@ int run_in_sandbox()
     INTERNAL_ERROR_EXIT("Cannot run proxy, mmap err");
 
   setup_pipe(result_pipes, 1);
-  setup_pipe(status_pipes, 0);
+  setup_pipe(msg_pipes, 0);
 
   proxy_pid = clone(
       sandbox_proxy,
@@ -503,12 +493,12 @@ int run_in_sandbox()
     INTERNAL_ERROR_EXIT("Cannot run proxy, clone returned 0");
 
   pid_t box_pid_inside_ns;
-  int n = read(status_pipes[0], &box_pid_inside_ns, sizeof(box_pid_inside_ns));
+  int n = read(msg_pipes[0], &box_pid_inside_ns, sizeof(box_pid_inside_ns));
   if (n != sizeof(box_pid_inside_ns))
     INTERNAL_ERROR_EXIT("Proxy failed before it passed box_pid");
 
   find_box_pid();
-  log_debug("Started proxy_pid=%d box_pid=%d box_pid_inside_ns=%d", (int)proxy_pid, (int)box_pid, (int)box_pid_inside_ns);
+  log_debug("Started proxy_pid=%d sandbox_pid=%d inside_ns_sandbox_pid=%d", (int)proxy_pid, (int)box_pid, (int)box_pid_inside_ns);
+
   box_keeper();
-  return 0;
 }

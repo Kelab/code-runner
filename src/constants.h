@@ -7,6 +7,14 @@
 #include "log.h"
 #include "utils.h"
 
+// 自定义信号
+// 要执行的程序没有找到
+#define SIGNF __SIGRTMIN + 10
+
+// error_code 的错误代码
+// 要运行的命令没有找到
+#define COMMAND_NOT_FOUND 1
+
 // 还未执行答案检查
 #define PENDING -1
 // 答案正确
@@ -26,18 +34,13 @@
 // 判题系统发生错误
 #define SYSTEM_ERROR 7
 
-#define CALLS_MAX 400
-
-// error_code 的错误代码
-// 要运行的命令没有找到
-#define COMMAND_NOT_FOUND 1
-
 // 资源相关
 #define RESOURCE_UNLIMITED 0
 #define CMD_MAX_LENGTH 20
-
-#define LIMITS_MAX_OUTPUT 128 * 1024 * 1024
+#define CALLS_MAX 400
+#define LIMITS_MAX_OUTPUT (128 * 1024 * 1024)
 #define LIMITS_MAX_FD 1024
+#define STACK_SIZE (100 * 1024 * 1024) /* 100M Stack size(bytes) for cloned child */
 
 struct Result
 {
@@ -80,10 +83,9 @@ struct Config
     CLOSE_FD(err_fd);                                                                           \
     CLOSE_FD(null_fd);                                                                          \
     if (_errno == 2)                                                                            \
-      raise(SIGUSR2);                                                                           \
+      raise(SIGNF);                                                                             \
     else                                                                                        \
       raise(SIGUSR1);                                                                           \
-    exit(_errno);                                                                               \
   }
 
 #define INTERNAL_ERROR_EXIT(message, arg...)                                       \
