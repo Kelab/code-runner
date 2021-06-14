@@ -61,9 +61,9 @@ void log_config()
   log_debug("config: cpu_time_limit %d ms", runner_config.cpu_time_limit);
   log_debug("config: real_time_limit %d ms", runner_config.real_time_limit);
   log_debug("config: memory_limit %d kb", runner_config.memory_limit);
-  log_debug("config: attach: STDIN %d | STDOUT %d | STDERR %d", runner_config.std_in, runner_config.std_out, runner_config.std_err);
-  log_debug("config: in_file %s", runner_config.in_file);
-  log_debug("config: out_file %s", runner_config.out_file);
+  log_debug("config: attach: STDIN %d | STDOUT %d | STDERR %d", runner_config.attach_stdin, runner_config.attach_stdout, runner_config.attach_stderr);
+  log_debug("config: stdin_file %s", runner_config.stdin_file);
+  log_debug("config: testdata_out %s", runner_config.testdata_out);
   log_debug("config: savefile %s", runner_config.save_file);
   log_debug("config: stdout_file %s", runner_config.stdout_file);
   log_debug("config: stderr_file %s", runner_config.stderr_file);

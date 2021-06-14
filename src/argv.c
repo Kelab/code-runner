@@ -74,10 +74,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
     runner_config.memory_limit = arg ? atoi(arg) : 0;
     break;
   case OPT_SYSTEM_INPUT:
-    runner_config.in_file = arg;
+    runner_config.stdin_file = arg;
     break;
   case OPT_SYSTEM_OUTPUT:
-    runner_config.out_file = arg;
+    runner_config.testdata_out = arg;
     break;
   case OPT_USER_OUTPUT:
     runner_config.stdout_file = arg;
@@ -100,15 +100,15 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
   case OPT_ATTACH:
     if (str_equal(arg, "STDIN"))
     {
-      runner_config.std_in = 1;
+      runner_config.attach_stdin = 1;
     }
     else if (str_equal(arg, "STDOUT"))
     {
-      runner_config.std_out = 1;
+      runner_config.attach_stdout = 1;
     }
     else if (str_equal(arg, "STDERR"))
     {
-      runner_config.std_err = 1;
+      runner_config.attach_stderr = 1;
     }
     break;
   case OPT_SHARE_NET:

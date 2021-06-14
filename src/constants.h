@@ -46,32 +46,32 @@ struct Result
 {
   int status;
   int cpu_time_used;
-  long cpu_time_used_us;
   int real_time_used;
-  long real_time_used_us;
   int memory_used;
   int signal_code;
   int exit_code;
   int error_code;
+  long cpu_time_used_us;
+  long real_time_used_us;
 };
 
 struct Config
 {
-  char **cmd;
-  char *log_file;
   int cpu_time_limit;
   int real_time_limit;
   int memory_limit;
   int memory_check_only;
-  int std_in;
-  int std_out;
-  int std_err;
+  int attach_stdin;
+  int attach_stdout;
+  int attach_stderr;
   int share_net;
-  char *in_file;
-  char *out_file;
+  char *stdin_file;
   char *stdout_file;
   char *stderr_file;
+  char *testdata_out;
   char *save_file;
+  char *log_file;
+  char **cmd;
 };
 
 #define CHILD_ERROR_EXIT(message)                                                               \

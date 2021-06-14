@@ -81,12 +81,12 @@ void child_process()
   SET_LIMIT(RLIMIT_FSIZE, LIMITS_MAX_OUTPUT);
 
   // 重定向 标准输出IO 到相应的文件中
-  if (runner_config.in_file)
+  if (runner_config.stdin_file)
   {
-    input_fd = open(runner_config.in_file, O_RDONLY | O_CREAT, 0700);
+    input_fd = open(runner_config.stdin_file, O_RDONLY | O_CREAT, 0700);
     if (input_fd != -1)
     {
-      log_debug("open in_file");
+      log_debug("open stdin_file");
       if (dup2(input_fd, STDIN_FILENO) == -1)
       {
         CHILD_ERROR_EXIT("input_fd dup error");
@@ -94,13 +94,13 @@ void child_process()
     }
     else
     {
-      CHILD_ERROR_EXIT("error open in_file");
+      CHILD_ERROR_EXIT("error open stdin_file");
     }
   }
   else
   {
-    log_info("in_file is not set");
-    if (runner_config.std_in == 0)
+    log_info("stdin_file is not set");
+    if (runner_config.attach_stdin == 0)
     {
       log_info("redirected stdin to /dev/null");
       dup2(null_fd, STDIN_FILENO);
@@ -130,7 +130,7 @@ void child_process()
   else
   {
     log_info("stdout_file is not set");
-    if (runner_config.std_out == 0)
+    if (runner_config.attach_stdout == 0)
     {
       log_info("redirected stdout to /dev/null");
       dup2(null_fd, STDOUT_FILENO);
@@ -160,7 +160,7 @@ void child_process()
   else
   {
     log_info("err_file is not set");
-    if (runner_config.std_err == 0)
+    if (runner_config.attach_stderr == 0)
     {
       log_info("redirected stderr to /dev/null");
       dup2(null_fd, STDERR_FILENO);

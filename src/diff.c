@@ -132,14 +132,14 @@ int check_diff(int rightout_fd, int userout_fd)
 
 void diff()
 {
-  if (runner_config.out_file && runner_config.stdout_file)
+  if (runner_config.testdata_out && runner_config.stdout_file)
   {
-    int right_fd = open(runner_config.out_file, O_RDONLY, 0644);
+    int right_fd = open(runner_config.testdata_out, O_RDONLY, 0644);
     int userout_fd = open(runner_config.stdout_file, O_RDONLY, 0644);
     check_diff(right_fd, userout_fd);
     CLOSE_FD(right_fd);
     CLOSE_FD(userout_fd);
   }
   else
-    log_info("skip diff, out_file or stdout_file not set.");
+    log_info("skip diff, testdata_out or stdout_file not set.");
 }
