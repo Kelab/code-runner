@@ -40,7 +40,7 @@
 #define CALLS_MAX 400
 #define LIMITS_MAX_OUTPUT (128 * 1024 * 1024)
 #define LIMITS_MAX_FD 1024
-#define STACK_SIZE (100 * 1024 * 1024) /* 100M Stack size(bytes) for cloned child */
+#define STACK_SIZE (10 * 1024 * 1024) /* 10M Stack size(bytes) for cloned child */
 
 struct Result
 {
