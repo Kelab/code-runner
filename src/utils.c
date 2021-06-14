@@ -126,8 +126,6 @@ size_t join_str(char *out_string, size_t out_bufsz, const char *delim, char **ch
   while (ptr < strend && *chararr)
   {
     ptr = util_cat(ptr, strend, *chararr);
-    printf("ptr %s\n", ptr);
-    printf("chararr %s\n", *chararr);
     chararr++;
     if (*chararr)
     {
