@@ -23,5 +23,6 @@ long tv_to_us(const struct timeval *tv);
 int write_file(const char *, const char *);
 void setup_pipe(int *fds, int nonblocking);
 size_t join_str(char *out_string, size_t out_bufsz, const char *delim, char **chararr);
+int kill_pid(pid_t pid);
 
 #endif

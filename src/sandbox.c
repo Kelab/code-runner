@@ -197,11 +197,10 @@ struct killer_parameter
   int timeout;
 };
 
-int kill_pid(pid_t pid)
-{
-  return kill(pid, SIGKILL);
-}
-
+/**
+ * 本部分逻辑来自：
+ * https://github.com/QingdaoU/Judger/blob/0b5299fd6d857969fd3925e1801670eeef27f9a1/src/killer.c#L14
+ */
 void *timeout_killer(void *killer_para)
 {
   // this is a new thread, kill the process if timeout
@@ -216,7 +215,7 @@ void *timeout_killer(void *killer_para)
   // this may sleep longer that expected, but we will have a check at the end
   if (sleep((unsigned int)((timeout + 500) / 1000)) != 0)
   {
-    log_debug("timeout");
+    log_debug("timeout， kill user application");
     kill_pid(pid);
     return NULL;
   }
@@ -227,9 +226,6 @@ void *timeout_killer(void *killer_para)
   return NULL;
 }
 
-/**
- * monitor the user process
- */
 void monitor(pid_t child_pid)
 {
   struct timeval start_time, end_time;
@@ -238,15 +234,18 @@ void monitor(pid_t child_pid)
   pthread_t tid = 0;
   if (runner_config.real_time_limit != RESOURCE_UNLIMITED)
   {
-    struct killer_parameter para;
-    para.timeout = runner_config.real_time_limit;
-    para.pid = child_pid;
+    struct killer_parameter para =
+        {
+            .timeout = runner_config.real_time_limit,
+            .pid = child_pid,
+        };
     if (pthread_create(&tid, NULL, timeout_killer, (void *)(&para)) != 0)
     {
       kill_pid(child_pid);
-      INTERNAL_ERROR_EXIT("pthread create error");
+      INTERNAL_ERROR_EXIT("pthread(timeout_killer) create error");
     }
   }
+
   // 获取子进程的退出状态
   int status;
   struct rusage ru;
@@ -469,13 +468,14 @@ static void box_keeper(void)
 
 void run_in_sandbox()
 {
-  /* Allocate memory to be used for the stack of the child. */
-  char *stack; /* Start of stack buffer */
-
   // Stacks grow downward on all
   // processors that run Linux (except the HP PA processors), so stack
   // usually points to the topmost address of the memory space set up
   // for the child stack.
+  char *stack;    /* Start of stack buffer */
+  char *stackTop; /* End of stack buffer */
+
+  /* Allocate memory to be used for the stack of the child. */
   stack = mmap(NULL, STACK_SIZE, PROT_READ | PROT_WRITE,
                MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
   if (stack == MAP_FAILED)
@@ -484,10 +484,11 @@ void run_in_sandbox()
   setup_pipe(result_pipes, 1);
   setup_pipe(msg_pipes, 0);
 
+  stackTop = stack + STACK_SIZE; /* Assume stack grows downward */
   proxy_pid = clone(
       sandbox_proxy,
-      stack + STACK_SIZE,
-      SIGCHLD | CLONE_NEWIPC | (runner_config.share_net ? 0 : CLONE_NEWNET) | CLONE_NEWNS | CLONE_NEWPID,
+      stackTop,
+      SIGCHLD | (runner_config.share_net ? 0 : CLONE_NEWNET) | CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS,
       0);
   if (proxy_pid < 0)
     INTERNAL_ERROR_EXIT("Cannot run proxy, clone failed");

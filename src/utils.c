@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
 
 extern struct Config runner_config;
 extern struct Result runner_result;
@@ -133,4 +134,9 @@ size_t join_str(char *out_string, size_t out_bufsz, const char *delim, char **ch
     }
   }
   return ptr - out_string;
+}
+
+int kill_pid(pid_t pid)
+{
+  return kill(pid, SIGKILL);
 }
