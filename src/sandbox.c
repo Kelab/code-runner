@@ -334,9 +334,6 @@ void monitor(pid_t child_pid)
         runner_result.status = MEMORY_LIMIT_EXCEEDED;
     }
   }
-  log_debug("child process memory_used %d", runner_result.memory_used);
-  log_debug("child process real_time_used %d", runner_result.real_time_used);
-  log_debug("child process cpu_time_used %d", runner_result.cpu_time_used);
 }
 
 static int do_write_result_to_fd()

@@ -53,20 +53,19 @@ int format_result(char *message)
 
 void log_config()
 {
-  int i = 0;
-  while ((runner_config.cmd)[i])
-  {
-    log_debug("config: cmd part %d: %s", i, (runner_config.cmd)[i]);
-    i++;
-  };
+  char buf[256] = {'\0'};
+  join_str(buf, sizeof(buf), " ", runner_config.cmd);
+  log_debug("config: cmd %s", buf);
+  log_debug("config: memory_check_only %d", runner_config.memory_check_only);
   log_debug("config: cpu_time_limit %d ms", runner_config.cpu_time_limit);
   log_debug("config: real_time_limit %d ms", runner_config.real_time_limit);
   log_debug("config: memory_limit %d kb", runner_config.memory_limit);
-  log_debug("config: memory_check_only %d", runner_config.memory_check_only);
   log_debug("config: attach: STDIN %d | STDOUT %d | STDERR %d", runner_config.std_in, runner_config.std_out, runner_config.std_err);
   log_debug("config: in_file %s", runner_config.in_file);
   log_debug("config: out_file %s", runner_config.out_file);
+  log_debug("config: savefile %s", runner_config.save_file);
   log_debug("config: stdout_file %s", runner_config.stdout_file);
+  log_debug("config: stderr_file %s", runner_config.stderr_file);
   log_debug("config: log_file %s", runner_config.log_file);
 }
 
@@ -107,4 +106,33 @@ void setup_pipe(int *fds, int nonblocking)
       INTERNAL_ERROR_EXIT("fcntl on pipe");
     }
   }
+}
+
+/**
+ * https://stackoverflow.com/questions/4681325/join-or-implode-in-c
+ * Thanks to bdonlan.
+ */
+static char *util_cat(char *dest, char *end, const char *str)
+{
+  while (dest < end && *str)
+    *dest++ = *str++;
+  return dest;
+}
+
+size_t join_str(char *out_string, size_t out_bufsz, const char *delim, char **chararr)
+{
+  char *ptr = out_string;
+  char *strend = out_string + out_bufsz;
+  while (ptr < strend && *chararr)
+  {
+    ptr = util_cat(ptr, strend, *chararr);
+    printf("ptr %s\n", ptr);
+    printf("chararr %s\n", *chararr);
+    chararr++;
+    if (*chararr)
+    {
+      ptr = util_cat(ptr, strend, delim);
+    }
+  }
+  return ptr - out_string;
 }
