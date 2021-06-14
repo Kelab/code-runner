@@ -30,11 +30,11 @@
 
 - [rxi/log.c](https://github.com/rxi/log.c)
 
-项目开发过程中参考的项目：
+参考、使用、改写了以下项目的部分代码：
 
 - [ioi/isolate](https://github.com/ioi/isolate)
 - [1510460325/judge-runner](https://github.com/1510460325/judge-runner)
 - [dojiong/Lo-runner](https://github.com/dojiong/Lo-runner/)
 - [QingdaoU/Judger](https://github.com/QingdaoU/Judger)
 
-对以上项目表示感谢。
+感谢上述提到的所有仓库以及开发人员。

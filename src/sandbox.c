@@ -1,3 +1,9 @@
+/**
+ * https://github.com/ioi/isolate/blob/990e60b563a4ab2c62010d451ea0e974953ad0f6/isolate.c
+ * 本沙箱的实现极大的参考了 ioi/isolate 的实现，感谢。
+ * This sandbox implementation references the ioi/isolate implementation, thank you.
+ */
+
 #define _GNU_SOURCE
 
 #include <unistd.h>
@@ -233,7 +239,6 @@ void monitor(pid_t child_pid)
   if (runner_config.real_time_limit != RESOURCE_UNLIMITED)
   {
     struct killer_parameter para;
-
     para.timeout = runner_config.real_time_limit;
     para.pid = child_pid;
     if (pthread_create(&tid, NULL, timeout_killer, (void *)(&para)) != 0)
