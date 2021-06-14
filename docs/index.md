@@ -10,7 +10,7 @@ PS: 在以后的内容里，统称本程序为 runner。
 
 先看几个例子吧。
 
-注意，需要在 root 权限下执行，因为 runner 需要调用一些系统调用来进行一些隔离设置。
+注意，需要在 root 权限下执行，因为 runner 需要调用系统调用来进行命名空间隔离。
 
 - `runner -l echo.log -u echo.out echo 123`  
   运行 `echo 123` 这个命令：  
