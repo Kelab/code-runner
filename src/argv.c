@@ -29,16 +29,15 @@ static char doc[] =
 \n    - runner -t 1000 -- node --version \
 \nThat's all.";
 
-/* Keys for options without short-options. */
 #define OPT_SHARE_NET 1
 #define OPT_MEMORY_CHECK_ONLY 4
 
 #define OPT_CPU_TIME_LIMIT 't'
 #define OPT_MEMORY_LIMIT 'm'
-#define OPT_SYSTEM_INPUT 'i'
-#define OPT_SYSTEM_OUTPUT 'o'
-#define OPT_USER_OUTPUT 'u'
-#define OPT_USER_ERROR 'e'
+#define OPT_STDIN 'i'
+#define OPT_STDOUT 'u'
+#define OPT_STDERR 'e'
+#define OPT_TESTDATA_OUTPUT 'o'
 #define OPT_LOG_FILE 'l'
 #define OPT_REAL_TIME_LIMIT 'r'
 #define OPT_SAVE_RESULT 's'
@@ -47,18 +46,17 @@ static char doc[] =
 static struct argp_option options[] = {
     {"cpu_time_limit", OPT_CPU_TIME_LIMIT, "TIME", 0, "cpu_time limit (default 0) ms, when 0, not check", 1},
     {"memory_limit", OPT_MEMORY_LIMIT, "SIZE", 0, "memory limit (default 0) kb, when 0, not check", 1},
-    {"system_input", OPT_SYSTEM_INPUT, "FILE", 0, "system_input path", 2},
-    {"system_output", OPT_SYSTEM_OUTPUT, "FILE", 0, "system_output path", 2},
-    {"user_output", OPT_USER_OUTPUT, "FILE", 0, "user outputs -> file path", 3},
-    {"user_err", OPT_USER_ERROR, "FILE", 0, "user error output -> file path", 3},
+    {"stdin", OPT_STDIN, "FILE", 0, "Redirect standard input from file. Otherwise, standard input is disabled.", 2},
+    {"stdout", OPT_STDOUT, "FILE", 0, "Redirect standard output to file. Otherwise, standard output is disabled.", 2},
+    {"stderr", OPT_STDERR, "FILE", 0, "Redirect standard error output to file. Otherwise, standard error is disabled.", 2},
+    {"attach", OPT_ATTACH, "NAME", 0, "Attach to STDIN, STDOUT or STDERR", 3},
+    {"testdata_output", OPT_TESTDATA_OUTPUT, "FILE", 0, "testdata output path", 3},
     {"save", OPT_SAVE_RESULT, "FILE", 0, "save result to file", 4},
-
-    {0, 0, 0, 0, "Optional options:"},
+    {0, 0, 0, 0, "Other options:"},
     {"real_time_limit", OPT_REAL_TIME_LIMIT, "MS", 0, "real_time_limit (default 0) ms"},
-    {"shart-net", OPT_SHARE_NET, 0, OPTION_ARG_OPTIONAL, "runner will create a new network namespace default, This prevents the program from communicating with the outside world."},
-    {"memory_check_only", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ARG_OPTIONAL, "not set memory limit in run, (default false)"},
+    {"shart_net", OPT_SHARE_NET, 0, OPTION_ARG_OPTIONAL, "runner will create a new network namespace default, This prevents the program from communicating with the outside world."},
+    {"memory_check_only", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ARG_OPTIONAL, "not set memory limit in run"},
     {"mco", OPT_MEMORY_CHECK_ONLY, 0, OPTION_ALIAS},
-    {"attach", OPT_ATTACH, "NAME", 0, "Attach to STDIN, STDOUT or STDERR"},
     {"log_file", OPT_LOG_FILE, "FILE", 0, "log file path, (default ./runner.log)"},
     {0},
 };
@@ -73,16 +71,16 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
   case OPT_MEMORY_LIMIT:
     runner_config.memory_limit = arg ? atoi(arg) : 0;
     break;
-  case OPT_SYSTEM_INPUT:
+  case OPT_STDIN:
     runner_config.stdin_file = arg;
     break;
-  case OPT_SYSTEM_OUTPUT:
+  case OPT_TESTDATA_OUTPUT:
     runner_config.testdata_out = arg;
     break;
-  case OPT_USER_OUTPUT:
+  case OPT_STDOUT:
     runner_config.stdout_file = arg;
     break;
-  case OPT_USER_ERROR:
+  case OPT_STDERR:
     runner_config.stderr_file = arg;
     break;
   case OPT_SAVE_RESULT:
