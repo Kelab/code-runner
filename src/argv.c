@@ -12,7 +12,7 @@
 extern struct Config runner_config;
 extern struct Result runner_result;
 
-const char *argp_program_version = "runner 0.1.0";
+const char *argp_program_version = "v0.1.0";
 
 static char args_doc[] = "COMMAND [ARG...] [-- <COMMAND_FLAG>...]";
 
