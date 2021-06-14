@@ -32,9 +32,9 @@ runner: $(OBJ)
 
 .PHONY: clean
 clean:
-	rm -f $(OUT_DIR)/*.o *~ $(SRC_DIR)/*~ main
-	rm -rf $(TMP_DIR)
-	rm -f *.log runner *.out
+	rm -rf $(OUT_DIR)/*.o $(SRC_DIR)/*~ $(TMP_DIR)/*.o *~
+	rm -rf main runner
+	rm -rf *.log *.out
 
 C_BASE=./tests/c
 NODE_BASE=./tests/node
@@ -47,8 +47,6 @@ testc: c runner | $(TMP_DIR)
 
 testnode: runner | $(TMP_DIR)
 	sudo ./runner -l $(TMP_DIR)/node.log -t 1000 -m 2048 --mco -i $(NODE_BASE)/1.in -o $(NODE_BASE)/1.out -u $(TMP_DIR)/node.tmp.out -- node $(NODE_BASE)/main.js
-
-
 
 $(sort $(MKDIRS)):
 	mkdir -p $@
