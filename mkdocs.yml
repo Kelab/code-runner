@@ -1,8 +1,8 @@
 site_name: code-runner
 site_description: 一个运行用户程序的工具，根据判题数据，判定程序运行结果。也可以获取程序运行时间和内存消耗。
 
-repo_name: KelabDev/code-runner
-repo_url: https://github.com/KelabDev/code-runner
+repo_name: Kelab/code-runner
+repo_url: https://github.com/Kelab/code-runner
 
 use_directory_urls: true
 
@@ -35,7 +35,7 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/KelabDev
-      name: KelabDev on GitHub
+      link: https://github.com/Kelab
+      name: Kelab on GitHub
 
-copyright: Copyright &copy; 2020 - 2021 KelabDev
+copyright: Copyright &copy; 2020 - 2021 Kelab

@@ -22,7 +22,7 @@
 
 ## 文档
 
-查看文档：<https://code-runner.kelab.dev>
+查看文档：<https://kelab.github.io/code-runner/>
 
 ## 致谢
 
