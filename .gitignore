@@ -1,3 +1,7 @@
+.xmake
+build
+compile_commands.json
+
 .devcontainer
 
 runner
@@ -5,8 +9,6 @@ main
 tmp/
 
 site
-
-.vscode
 
 *.log
 
@@ -75,7 +77,8 @@ dkms.conf
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*

@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "*.dbclient-js": "javascript",
+        "string.h": "c",
+        "unistd.h": "c",
+        "stdlib.h": "c",
+        "constants.h": "c",
+        "fcntl.h": "c",
+        "_types.h": "c",
+        "__hash_table": "c",
+        "array": "c",
+        "complex": "c",
+        "type_traits": "c",
+        "limits": "c",
+        "ratio": "c",
+        "variant": "c"
+    }
+}
